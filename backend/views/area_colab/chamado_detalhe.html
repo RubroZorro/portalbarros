@@ -1,0 +1,328 @@
+{% extends 'area_colab/layout.html' %}
+{% block title %}{{ chamado.numero }}{% endblock %}
+{% block topbar_title %}Detalhe do Chamado{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:18px;">
+  <a href="{{ url_for('area_colab.dashboard') }}"
+     style="display:inline-flex;align-items:center;gap:6px;font-size:0.82rem;color:var(--muted);text-decoration:none;">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    Voltar ao Kanban
+  </a>
+</div>
+
+<div class="page-header" style="margin-bottom:20px;">
+  <div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;">
+      <h1 style="font-size:1.4rem;">{{ chamado.numero }}</h1>
+      <span class="status-badge sb-{{ chamado.status }}">{{ chamado.status_colab_label }}</span>
+      <span class="tipo-badge tb-{{ chamado.tipo }}" style="font-size:0.72rem;padding:3px 9px;">{{ chamado.tipo_label }}</span>
+    </div>
+    <p>{{ chamado.titulo }}</p>
+  </div>
+</div>
+
+<div class="detalhe-grid">
+  <!-- ── COLUNA PRINCIPAL ── -->
+  <div>
+
+    <!-- Info do chamado -->
+    <div class="sec-card">
+      <div class="sec-card-header">
+        <span class="sec-card-title">Informações</span>
+      </div>
+      <div class="sec-card-body" style="padding:0;">
+        <table class="info-table" style="padding:0 18px;">
+          <tr>
+            <td>Empresa</td>
+            <td>{{ chamado.empresa.razao_social }}</td>
+          </tr>
+          <tr>
+            <td>Tipo</td>
+            <td>{{ chamado.tipo_label }}{% if chamado.tipo_certidao %} — Certidão {{ chamado.tipo_certidao }}{% endif %}</td>
+          </tr>
+          {% if chamado.nome_funcionario %}
+          <tr>
+            <td>Funcionário</td>
+            <td>{{ chamado.nome_funcionario }}</td>
+          </tr>
+          {% endif %}
+          <tr>
+            <td>Aberto em</td>
+            <td>{{ chamado.data_formatada }}</td>
+          </tr>
+          <tr>
+            <td>Prazo</td>
+            <td>
+              {{ chamado.prazo_formatado }}
+              {% if chamado.semaforo %}
+                <span class="sem-badge sem-{{ chamado.semaforo }}" style="margin-left:6px;">{{ chamado.tempo_restante_str }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% if chamado.descricao %}
+          <tr>
+            <td>Descrição</td>
+            <td style="white-space:pre-wrap;line-height:1.5;">{{ chamado.descricao }}</td>
+          </tr>
+          {% endif %}
+          {% if chamado.devolvido_por_nome %}
+          <tr>
+            <td>Devolvido por</td>
+            <td style="color:#b45309;">{{ chamado.devolvido_por_nome }}</td>
+          </tr>
+          {% endif %}
+          {% if chamado.finalizado_por_nome %}
+          <tr>
+            <td>Finalizado por</td>
+            <td style="color:#15803d;">{{ chamado.finalizado_por_nome }}{% if chamado.finalizado_em %} · {{ chamado.finalizado_em.strftime('%d/%m/%Y %H:%M') }}{% endif %}</td>
+          </tr>
+          {% endif %}
+        </table>
+      </div>
+    </div>
+
+    <!-- Histórico -->
+    <div class="sec-card">
+      <div class="sec-card-header">
+        <span class="sec-card-title">Histórico de ações</span>
+      </div>
+      <div class="sec-card-body">
+        {% if historico %}
+        <div class="timeline">
+          {% for h in historico %}
+          <div class="tl-item">
+            <div class="tl-left">
+              <div class="tl-dot d-{{ h.acao }}"></div>
+              <div class="tl-line"></div>
+            </div>
+            <div class="tl-body">
+              <div class="tl-acao">{{ h.acao_label }}</div>
+              <div class="tl-who">{{ h.usuario_nome }}</div>
+              {% if h.detalhe %}
+                <div class="tl-detail">{{ h.detalhe }}</div>
+              {% endif %}
+              <div class="tl-date">{{ h.data_formatada }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p style="color:var(--muted);font-size:0.83rem;">Nenhuma ação registrada.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Anexos -->
+    <div class="sec-card">
+      <div class="sec-card-header">
+        <span class="sec-card-title">Documentos e Arquivos</span>
+        <span style="font-size:0.72rem;color:var(--muted);">Máx. 10 MB — pdf, docx, xlsx, png, jpg, zip</span>
+      </div>
+      <div class="sec-card-body">
+
+        {% if chamado.anexos %}
+        <div class="anexo-list" style="margin-bottom:18px;">
+          {% for a in chamado.anexos %}
+          <div class="anexo-item">
+            <div class="anexo-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+            </div>
+            <div class="anexo-info">
+              <div class="anexo-nome">{{ a.nome_original }}</div>
+              <div class="anexo-meta">{{ a.tamanho_str }} · enviado por {{ a.enviado_por.nome }}</div>
+            </div>
+            <a href="{{ url_for('area_colab.download_anexo', chamado_id=chamado.id, anexo_id=a.id) }}"
+               class="btn-dl">Baixar</a>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Upload form: só disponível para quem assumiu o chamado (ou admin) -->
+        {% if chamado.atribuido_a == current_user.id or current_user.role == 'admin' %}
+        <form method="POST" action="{{ url_for('area_colab.upload_anexo', id=chamado.id) }}"
+              enctype="multipart/form-data" id="upload-form">
+          <div class="upload-drop" onclick="document.getElementById('file-input').click()">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                 style="opacity:0.3;margin:0 auto 10px;display:block;">
+              <polyline points="16 16 12 12 8 16"/>
+              <line x1="12" y1="12" x2="12" y2="21"/>
+              <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/>
+            </svg>
+            <p>Clique para selecionar ou arraste o arquivo aqui</p>
+            <input type="file" id="file-input" name="arquivo"
+                   accept=".pdf,.docx,.xlsx,.png,.jpg,.jpeg,.zip"
+                   onchange="mostrarArquivo(this)">
+            <button type="button" class="btn-choose" style="margin-top:8px;">Escolher arquivo</button>
+          </div>
+          <div id="arquivo-nome" style="margin-top:8px;font-size:0.8rem;color:var(--navy);display:none;"></div>
+          <button type="submit" id="btn-enviar" class="btn-submit"
+                  style="margin-top:14px;display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <polyline points="16 16 12 12 8 16"/>
+              <line x1="12" y1="12" x2="12" y2="21"/>
+              <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/>
+            </svg>
+            Enviar arquivo
+          </button>
+        </form>
+        {% else %}
+        <div style="text-align:center;padding:18px 0 8px;color:var(--muted);font-size:0.82rem;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 6px;opacity:0.4;"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+          Apenas quem assumiu o chamado pode enviar documentos.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div><!-- /col principal -->
+
+  <!-- ── COLUNA DE AÇÕES ── -->
+  <div>
+    <div class="action-card">
+      <h4>Ações</h4>
+      <div class="action-row">
+
+        {% if chamado.status in ('pendente', 'devolvido') and not chamado.atribuido_a %}
+          <form method="POST" action="{{ url_for('area_colab.pegar_chamado', id=chamado.id) }}">
+            <button type="submit" class="btn-action-pegar">Pegar este chamado</button>
+          </form>
+
+        {% elif chamado.status == 'em_realizacao' %}
+          {% if chamado.atribuido_a == current_user.id or current_user.role == 'admin' %}
+            <button type="button" class="btn-action-fin"
+                    onclick="abrirFinalizar({{ chamado.id }}, '{{ chamado.numero }}')">
+              Finalizar chamado
+            </button>
+            <button type="button" class="btn-action-dev"
+                    onclick="abrirDevolver({{ chamado.id }}, '{{ chamado.numero }}')">
+              Devolver chamado
+            </button>
+          {% else %}
+            <div style="font-size:0.83rem;color:var(--muted);text-align:center;padding:10px 0;">
+              Em andamento com<br>
+              <strong style="color:var(--text);">{{ chamado.responsavel.nome if chamado.responsavel else '—' }}</strong>
+            </div>
+          {% endif %}
+
+        {% elif chamado.status == 'finalizado' %}
+          <div style="text-align:center;padding:10px 0;">
+            <div style="width:44px;height:44px;border-radius:50%;background:rgba(22,163,74,0.1);color:#15803d;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div style="font-size:0.84rem;font-weight:600;color:#15803d;">Finalizado</div>
+            {% if chamado.finalizado_por_nome %}
+            <div style="font-size:0.75rem;color:var(--muted);margin-top:4px;">por {{ chamado.finalizado_por_nome }}</div>
+            {% endif %}
+          </div>
+        {% endif %}
+
+      </div>
+
+      <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border);">
+        <div class="meta-item">
+          <span class="meta-label">Empresa</span>
+          <span class="meta-val">{{ chamado.empresa.razao_social }}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Aberto em</span>
+          <span class="meta-val">{{ chamado.data_formatada }}</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Prazo</span>
+          <span class="meta-val">{{ chamado.prazo_formatado }}</span>
+        </div>
+        {% if chamado.responsavel %}
+        <div class="meta-item">
+          <span class="meta-label">Responsável</span>
+          <span class="meta-val">{{ chamado.responsavel.nome }}</span>
+        </div>
+        {% endif %}
+        <div class="meta-item" style="border-bottom:none;">
+          <span class="meta-label">Documentos</span>
+          <span class="meta-val">{{ chamado.anexos|length }} arquivo(s)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /detalhe-grid -->
+
+<!-- Modais (finalizarz e devolver) -->
+<div class="modal-wrap" id="modal-finalizar">
+  <div class="modal-box">
+    <div class="modal-icon mi-green">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="modal-title">Finalizar chamado <span id="fin-num"></span>?</div>
+    <div class="modal-desc">Esta ação não pode ser desfeita. O cliente será notificado automaticamente por comunicado.</div>
+    <form id="form-finalizar" method="POST">
+      <div class="modal-actions">
+        <button type="button" class="btn-cancelar" onclick="fecharFinalizar()">Cancelar</button>
+        <button type="submit" class="btn-confirmar">Confirmar finalização</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-wrap" id="modal-devolver">
+  <div class="modal-box">
+    <div class="modal-icon mi-gold">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/>
+      </svg>
+    </div>
+    <div class="modal-title">Devolver chamado <span id="dev-num"></span>?</div>
+    <div class="modal-desc">O chamado voltará para a fila de "Em Aberto" e ficará disponível para outro colaborador.</div>
+    <form id="form-devolver" method="POST">
+      <textarea name="motivo" class="modal-textarea" placeholder="Motivo (opcional)…"></textarea>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancelar" onclick="fecharDevolver()">Cancelar</button>
+        <button type="submit" class="btn-conf-gold">Devolver chamado</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function mostrarArquivo(input) {
+    const nome = input.files[0]?.name || '';
+    const div = document.getElementById('arquivo-nome');
+    const btn = document.getElementById('btn-enviar');
+    if (nome) {
+      div.textContent = '📎 ' + nome;
+      div.style.display = 'block';
+      btn.style.display = 'inline-flex';
+    }
+  }
+  function abrirFinalizar(id, num) {
+    document.getElementById('fin-num').textContent = num;
+    document.getElementById('form-finalizar').action = '/colab/chamados/' + id + '/finalizar';
+    document.getElementById('modal-finalizar').classList.add('show');
+  }
+  function fecharFinalizar() {
+    document.getElementById('modal-finalizar').classList.remove('show');
+  }
+  function abrirDevolver(id, num) {
+    document.getElementById('dev-num').textContent = num;
+    document.getElementById('form-devolver').action = '/colab/chamados/' + id + '/devolver';
+    document.getElementById('form-devolver').querySelector('textarea').value = '';
+    document.getElementById('modal-devolver').classList.add('show');
+  }
+  function fecharDevolver() {
+    document.getElementById('modal-devolver').classList.remove('show');
+  }
+  document.querySelectorAll('.modal-wrap').forEach(m => {
+    m.addEventListener('click', function(e) {
+      if (e.target === this) this.classList.remove('show');
+    });
+  });
+</script>
+{% endblock %}

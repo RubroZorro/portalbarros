@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — Barros &amp; Barros Contabilidade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy: #1B2D6B; --navy-deep: #111e4a; --gold: #C9A227;
+      --white: #fff; --off: #f4f6fb; --text: #1a2340; --muted: #6b7280; --border: #e5e7eb;
+    }
+    html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(--off); color: var(--text); }
+
+    .login-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: linear-gradient(135deg, var(--navy-deep) 0%, var(--navy) 60%, #2a3f8f 100%);
+    }
+
+    .login-card {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 44px 40px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.25);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 36px;
+    }
+    .bb-mark {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 700; font-size: 2.4rem; line-height: 1; letter-spacing: -1px;
+    }
+    .bb-mark .b1 { color: var(--gold); }
+    .bb-mark .b2 { color: var(--navy); }
+    .brand-sep { width: 1px; height: 36px; background: rgba(201,162,39,0.4); }
+    .brand-text .brand-name {
+      font-family: 'Cormorant Garamond', serif; font-weight: 700;
+      font-size: 0.9rem; color: var(--navy); text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .brand-text .brand-sub {
+      font-size: 0.62rem; font-weight: 300; letter-spacing: 0.18em; color: var(--gold);
+      text-transform: uppercase; border-top: 1px solid rgba(201,162,39,0.35);
+      padding-top: 3px; margin-top: 3px;
+    }
+
+    h2 { font-size: 1.35rem; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
+    .subtitle { font-size: 0.82rem; color: var(--muted); margin-bottom: 28px; }
+
+    .form-group { margin-bottom: 18px; }
+    label { display: block; font-size: 0.8rem; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+    .form-control {
+      width: 100%; padding: 11px 14px; border: 1.5px solid var(--border);
+      border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
+      color: var(--text); background: var(--white); transition: border-color 0.15s;
+      outline: none;
+    }
+    .form-control:focus { border-color: var(--navy); }
+    .form-control::placeholder { color: #b0b8c1; }
+
+    .remember-row {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 24px; font-size: 0.82rem; color: var(--muted);
+    }
+    .remember-row input { width: 15px; height: 15px; accent-color: var(--navy); cursor: pointer; }
+
+    .btn-login {
+      width: 100%; padding: 13px;
+      background: var(--navy); color: var(--white);
+      border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem; font-weight: 600; cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn-login:hover { background: #2a3f8f; }
+    .btn-login:active { transform: scale(0.99); }
+
+    .alert {
+      padding: 12px 14px; border-radius: 8px; margin-bottom: 20px;
+      font-size: 0.82rem; font-weight: 500;
+    }
+    .alert-erro { background: rgba(220,38,38,0.08); color: #b91c1c; border: 1px solid rgba(220,38,38,0.18); }
+    .alert-sucesso { background: rgba(22,163,74,0.08); color: #15803d; border: 1px solid rgba(22,163,74,0.18); }
+
+    .login-footer { margin-top: 28px; text-align: center; font-size: 0.75rem; color: var(--muted); }
+    .login-footer a { color: var(--navy); text-decoration: none; }
+    .login-footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 480px) {
+      .login-card { padding: 32px 24px; }
+    }
+  </style>
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-card">
+
+    <div class="brand">
+      <div class="bb-mark"><span class="b1">B</span><span class="b2">B</span></div>
+      <div class="brand-sep"></div>
+      <div class="brand-text">
+        <div class="brand-name">Barros<br>&amp; Barros</div>
+        <div class="brand-sub">Contabilidade</div>
+      </div>
+    </div>
+
+    <h2>Acesso ao Portal</h2>
+    <p class="subtitle">Entre com o CNPJ da sua empresa e sua senha.</p>
+
+    {% with messages = get_flashed_messages(with_categories=True) %}
+      {% for cat, msg in messages %}
+        <div class="alert alert-{{ cat }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('auth.login') }}">
+      <div class="form-group">
+        <label for="cnpj">CNPJ da empresa</label>
+        <input type="text" id="cnpj" name="cnpj" class="form-control"
+               placeholder="00.000.000/0000-00" maxlength="18"
+               value="{{ request.form.get('cnpj', '') }}" required>
+      </div>
+      <div class="form-group">
+        <label for="senha">Senha</label>
+        <input type="password" id="senha" name="senha" class="form-control"
+               placeholder="Sua senha" required>
+      </div>
+      <div class="remember-row">
+        <input type="checkbox" id="lembrar" name="lembrar">
+        <label for="lembrar" style="margin:0;font-weight:400;">Manter conectado</label>
+      </div>
+      <button type="submit" class="btn-login">Entrar</button>
+    </form>
+
+    <div class="login-footer">
+      <a href="#">Esqueci minha senha</a>
+      &nbsp;·&nbsp;
+      <a href="{{ url_for('index') }}">Voltar ao site</a>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

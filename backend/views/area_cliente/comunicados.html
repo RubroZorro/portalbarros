@@ -1,0 +1,54 @@
+{% extends 'area_cliente/layout.html' %}
+
+{% block title %}Comunicados{% endblock %}
+{% block topbar_title %}Comunicados{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Comunicados</h1>
+  <p>Mensagens e avisos do escritório para sua empresa.</p>
+</div>
+
+<div class="com-list">
+  {% for c in comunicados %}
+  {% set lido = c.id in lidas_set %}
+  <div class="com-card {% if not lido %}unread{% endif %}">
+    <div class="com-icon">
+      {% if not lido %}
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
+      </svg>
+      {% else %}
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+      </svg>
+      {% endif %}
+    </div>
+    <div class="com-body">
+      <div class="com-title">{{ c.titulo }}</div>
+      <div class="com-preview">{{ c.conteudo }}</div>
+      <div class="com-footer">
+        <span class="com-date">{{ c.data_formatada }}</span>
+        {% if not lido %}
+          <form method="POST" action="{{ url_for('area_cliente.marcar_lido', id=c.id) }}" style="margin:0;">
+            <button type="submit" style="background:none;border:none;cursor:pointer;font-size:0.72rem;font-weight:600;color:var(--navy);padding:2px 7px;border-radius:100px;background:rgba(27,45,107,0.09);">
+              Marcar como lido
+            </button>
+          </form>
+        {% else %}
+          <span style="font-size:0.68rem;color:var(--muted);">Lido</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
+    </svg>
+    <p>Nenhum comunicado disponível.</p>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

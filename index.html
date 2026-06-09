@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Barros & Barros Contabilidade — Em Breve</title>
+<meta name="description" content="Barros & Barros Contabilidade — Mais de 10 anos cuidando da sua empresa em Recife e Pernambuco. Em breve, nosso novo site.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #1B2D6B;
+    --navy-deep: #111e4a;
+    --navy-light: #2a3f8f;
+    --gold: #C9A227;
+    --gold-light: #e0b83a;
+    --gold-pale: #f5e9c0;
+    --white: #ffffff;
+    --off: #f8f7f4;
+  }
+
+  html, body {
+    height: 100%;
+    font-family: 'DM Sans', sans-serif;
+    background: var(--navy-deep);
+    color: var(--white);
+    overflow-x: hidden;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem;
+    position: relative;
+  }
+
+  .bg-pattern {
+    position: fixed;
+    inset: 0;
+    background:
+      repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 60px,
+        rgba(201,162,39,0.03) 60px,
+        rgba(201,162,39,0.03) 61px
+      ),
+      repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 60px,
+        rgba(201,162,39,0.03) 60px,
+        rgba(201,162,39,0.03) 61px
+      );
+    pointer-events: none;
+  }
+
+  .bg-glow {
+    position: fixed;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,162,39,0.08) 0%, transparent 70%);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    max-width: 640px;
+    width: 100%;
+    animation: fadeUp 1s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .logo-wrap {
+    margin-bottom: 2.5rem;
+    animation: fadeUp 1s ease 0.1s both;
+  }
+
+  .logo-mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+  }
+
+  .bb-letters {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700;
+    font-size: 5rem;
+    line-height: 1;
+    letter-spacing: -2px;
+  }
+
+  .bb-letters .b1 { color: var(--gold); }
+  .bb-letters .b2 { color: var(--white); }
+
+  .logo-divider {
+    width: 1px;
+    height: 64px;
+    background: rgba(201,162,39,0.5);
+  }
+
+  .logo-text {
+    text-align: left;
+  }
+
+  .logo-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700;
+    font-size: 1.5rem;
+    letter-spacing: 0.04em;
+    color: var(--white);
+    line-height: 1.15;
+    text-transform: uppercase;
+  }
+
+  .logo-sub {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    font-size: 0.7rem;
+    letter-spacing: 0.22em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-top: 5px;
+    border-top: 1px solid rgba(201,162,39,0.4);
+    padding-top: 5px;
+  }
+
+  .gold-line {
+    width: 48px;
+    height: 2px;
+    background: var(--gold);
+    margin: 0 auto 2rem;
+    animation: fadeUp 1s ease 0.2s both;
+  }
+
+  .headline {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    font-size: clamp(2rem, 5vw, 3rem);
+    line-height: 1.2;
+    color: var(--white);
+    margin-bottom: 1rem;
+    animation: fadeUp 1s ease 0.3s both;
+  }
+
+  .headline em {
+    color: var(--gold);
+    font-style: normal;
+  }
+
+  .subline {
+    font-size: 1rem;
+    font-weight: 300;
+    color: rgba(255,255,255,0.65);
+    line-height: 1.7;
+    max-width: 460px;
+    margin-bottom: 2.5rem;
+    animation: fadeUp 1s ease 0.4s both;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(201,162,39,0.12);
+    border: 1px solid rgba(201,162,39,0.3);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    color: var(--gold-light);
+    margin-bottom: 2.5rem;
+    animation: fadeUp 1s ease 0.45s both;
+  }
+
+  .badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  .cta-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    max-width: 360px;
+    animation: fadeUp 1s ease 0.55s both;
+  }
+
+  .btn-primary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 16px 28px;
+    background: var(--gold);
+    color: var(--navy-deep);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background 0.2s, transform 0.15s;
+  }
+
+  .btn-primary:hover {
+    background: var(--gold-light);
+    transform: translateY(-1px);
+  }
+
+  .btn-primary svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .btn-secondary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px 28px;
+    background: transparent;
+    color: rgba(255,255,255,0.75);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 400;
+    text-decoration: none;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 4px;
+    transition: border-color 0.2s, color 0.2s, transform 0.15s;
+  }
+
+  .btn-secondary:hover {
+    border-color: rgba(255,255,255,0.35);
+    color: var(--white);
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  .divider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    margin: 4px 0;
+  }
+
+  .divider-row span {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.3);
+  }
+
+  .divider-row::before, .divider-row::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.1);
+  }
+
+  .stats {
+    display: flex;
+    gap: 2rem;
+    margin-top: 3rem;
+    animation: fadeUp 1s ease 0.65s both;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .stat-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--gold);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+    font-weight: 300;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.45);
+    text-transform: uppercase;
+  }
+
+  .stat-sep {
+    width: 1px;
+    height: 40px;
+    background: rgba(255,255,255,0.1);
+    align-self: center;
+  }
+
+  .footer {
+    position: relative;
+    z-index: 1;
+    margin-top: 3rem;
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.25);
+    letter-spacing: 0.04em;
+    animation: fadeUp 1s ease 0.75s both;
+  }
+
+  @media (max-width: 480px) {
+    .bb-letters { font-size: 3.5rem; }
+    .logo-name { font-size: 1.2rem; }
+    .stats { gap: 1.2rem; }
+    .stat-num { font-size: 1.6rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-pattern"></div>
+<div class="bg-glow"></div>
+
+<div class="container">
+
+  <div class="logo-wrap">
+    <div class="logo-mark">
+      <div class="bb-letters">
+        <span class="b1">B</span><span class="b2">B</span>
+      </div>
+      <div class="logo-divider"></div>
+      <div class="logo-text">
+        <div class="logo-name">Barros<br>&amp; Barros</div>
+        <div class="logo-sub">Contabilidade</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="gold-line"></div>
+
+  <div class="badge">Novo site em construção</div>
+
+  <h1 class="headline">
+    Mais de 25 anos cuidando<br>da sua <em>empresa</em> com precisão.
+  </h1>
+
+  <p class="subline">
+    Mais de 25 anos de mercado, nossa equipe segue disponível para tirar dúvidas, fazer orçamentos
+    e cuidar do que realmente importa — o seu negócio.
+  </p>
+
+  <div class="cta-group">
+    <a class="btn-primary" href="https://wa.me/5581996876093?text=Olá,%20vim%20pelo%20site%20e%20gostaria%20de%20um%20orçamento." target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+        <path d="M12 0C5.373 0 0 5.373 0 12c0 2.107.548 4.088 1.508 5.814L0 24l6.336-1.488A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.003-1.369l-.36-.214-3.727.977.995-3.635-.234-.374A9.78 9.78 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/>
+      </svg>
+      Falar pelo WhatsApp
+    </a>
+
+    <div class="divider-row"><span>ou</span></div>
+
+    <a class="btn-secondary" href="https://instagram.com/barrosebarroscontabilidade" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+        <circle cx="12" cy="12" r="4"/>
+        <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none"/>
+      </svg>
+      Seguir no Instagram
+    </a>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <span class="stat-num">+25</span>
+      <span class="stat-label">Anos de experiência</span>
+    </div>
+    <div class="stat-sep"></div>
+    <div class="stat">
+      <span class="stat-num">PE</span>
+      <span class="stat-label">Recife · Zona da Mata · Agreste</span>
+    </div>
+    <div class="stat-sep"></div>
+    <div class="stat">
+      <span class="stat-num">6+</span>
+      <span class="stat-label">Segmentos atendidos</span>
+    </div>
+  </div>
+
+</div>
+
+<p class="footer">© 2026 Barros &amp; Barros Contabilidade · barrosebarroscontabilidade.com.br</p>
+
+</body>
+</html>

@@ -1,0 +1,92 @@
+{% extends 'area_colab/layout.html' %}
+{% block title %}Criar Comunicado{% endblock %}
+{% block topbar_title %}Criar Comunicado{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Criar Comunicado</h1>
+    <p>Envie mensagens e avisos para clientes.</p>
+  </div>
+</div>
+
+<form method="POST" action="{{ url_for('area_colab.criar_comunicado') }}">
+  <div class="form-card">
+
+    <div style="margin-bottom:20px;">
+      <label class="field-label" for="titulo">Título <span class="req">*</span></label>
+      <input type="text" id="titulo" name="titulo" class="form-control"
+             placeholder="Ex.: Prazo de entrega de documentos — Julho 2026"
+             maxlength="200" required>
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <label class="field-label" for="conteudo">Mensagem <span class="req">*</span></label>
+      <textarea id="conteudo" name="conteudo" class="form-control"
+                placeholder="Escreva o comunicado aqui…"
+                style="min-height:140px;" required></textarea>
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <label class="field-label">Destinatário <span class="req">*</span></label>
+      <div class="radio-card">
+        <label class="radio-opt">
+          <input type="radio" name="destinatario" value="todos" checked
+                 onchange="toggleEmpresa(this)">
+          <div class="radio-inner">
+            <strong>Todos os clientes</strong>
+            <span>O comunicado ficará visível para todas as empresas cadastradas.</span>
+          </div>
+        </label>
+        <label class="radio-opt">
+          <input type="radio" name="destinatario" value="especifico"
+                 onchange="toggleEmpresa(this)">
+          <div class="radio-inner">
+            <strong>Empresa específica</strong>
+            <span>Somente a empresa selecionada verá esta mensagem.</span>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <div id="campo-empresa" style="display:none;margin-bottom:20px;">
+      <label class="field-label" for="empresa_id">Empresa <span class="req">*</span></label>
+      <select id="empresa_id" name="empresa_id" class="form-control">
+        <option value="">Selecione a empresa…</option>
+        {% for emp in empresas %}
+          <option value="{{ emp.id }}">{{ emp.razao_social }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div style="display:flex;gap:12px;align-items:center;margin-top:8px;">
+      <button type="submit" class="btn-submit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"/>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+        Enviar Comunicado
+      </button>
+      <a href="{{ url_for('area_colab.comunicados') }}"
+         style="font-size:0.84rem;color:var(--muted);text-decoration:none;">Cancelar</a>
+    </div>
+
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function toggleEmpresa(radio) {
+    const campo = document.getElementById('campo-empresa');
+    const sel = document.getElementById('empresa_id');
+    if (radio.value === 'especifico') {
+      campo.style.display = 'block';
+      sel.required = true;
+    } else {
+      campo.style.display = 'none';
+      sel.required = false;
+    }
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends 'area_colab/layout.html' %}
+{% block title %}Comunicados Enviados{% endblock %}
+{% block topbar_title %}Comunicados Enviados{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Comunicados Enviados</h1>
+    <p>Acompanhe a leitura dos comunicados por empresa.</p>
+  </div>
+  <a href="{{ url_for('area_colab.criar_comunicado') }}"
+     style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:var(--navy);color:#fff;border-radius:8px;text-decoration:none;font-size:0.84rem;font-weight:600;white-space:nowrap;">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+    Novo comunicado
+  </a>
+</div>
+
+<div class="sec-card">
+  {% if comunicados %}
+  <!-- Cabeçalho -->
+  <div class="com-row com-head" style="background:var(--off);border-bottom:1px solid var(--border);">
+    <span>Comunicado</span>
+    <span>Destinatário</span>
+    <span>Enviado em</span>
+    <span>Leituras</span>
+    <span style="text-align:right;"></span>
+  </div>
+
+  {% for c in comunicados %}
+  {% set s = stats[c.id] %}
+  {% set pct = ((s.leram / s.total * 100) | int) if s.total > 0 else 0 %}
+  <div class="com-row" style="{% if loop.last %}border-bottom:none{% endif %}">
+
+    <div>
+      <div style="font-size:0.84rem;font-weight:600;color:var(--text);margin-bottom:2px;">
+        {{ c.titulo|truncate(60, True, '…') }}
+      </div>
+      <div style="font-size:0.72rem;color:var(--muted);">
+        {{ c.conteudo|truncate(80, True, '…') }}
+      </div>
+    </div>
+
+    <div style="font-size:0.78rem;color:var(--muted);">
+      {% if c.empresa_id is none %}
+        <span style="font-weight:500;color:var(--navy);">Todos</span>
+      {% elif c.empresa_destino %}
+        {{ c.empresa_destino.razao_social|truncate(25, True, '…') }}
+      {% else %}
+        —
+      {% endif %}
+    </div>
+
+    <div style="font-size:0.78rem;color:var(--muted);">{{ c.data_formatada }}</div>
+
+    <div>
+      <div style="font-size:0.78rem;color:var(--text);font-weight:500;">
+        {{ s.leram }} de {{ s.total }}
+        {% if s.total > 0 %}
+          <span style="color:var(--muted);font-weight:400;">({{ pct }}%)</span>
+        {% endif %}
+      </div>
+      <div class="com-stat-bar" style="margin-top:4px;width:90px;">
+        <div class="com-stat-fill" style="width:{{ pct }}%;"></div>
+      </div>
+    </div>
+
+    <div style="text-align:right;">
+      <span style="font-size:0.68rem;color:var(--muted);">#{{ c.id }}</span>
+    </div>
+
+  </div>
+  {% endfor %}
+
+  {% else %}
+  <div style="text-align:center;padding:48px 24px;color:var(--muted);">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="opacity:0.3;display:block;margin:0 auto 12px;">
+      <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+    </svg>
+    <p style="font-size:0.875rem;margin-bottom:14px;">Nenhum comunicado enviado ainda.</p>
+    <a href="{{ url_for('area_colab.criar_comunicado') }}"
+       style="display:inline-block;padding:9px 20px;background:var(--navy);color:#fff;border-radius:8px;text-decoration:none;font-size:0.82rem;font-weight:600;">
+      Criar primeiro comunicado
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

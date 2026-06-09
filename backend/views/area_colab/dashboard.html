@@ -1,0 +1,227 @@
+{% extends 'area_colab/layout.html' %}
+{% block title %}Chamados{% endblock %}
+{% block topbar_title %}Kanban de Chamados{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Chamados</h1>
+    <p>{{ data_hoje }}</p>
+  </div>
+</div>
+
+<div class="kanban">
+
+  <!-- ── EM ABERTO ─────────────────────────────────────────── -->
+  <div class="k-col">
+    <div class="k-head">
+      <span class="k-col-dot kd-aberto"></span>
+      <span class="k-title">Em Aberto</span>
+      <span class="k-count kc-aberto">{{ em_aberto|length }}</span>
+    </div>
+    <div class="k-cards">
+      {% for ch in em_aberto %}
+      <div class="ch-card">
+        <div class="ch-card-top">
+          <span class="ch-num">{{ ch.numero }}</span>
+          <span class="tipo-badge tb-{{ ch.tipo }}">{{ ch.tipo_label }}</span>
+          {% if ch.semaforo %}
+            <span class="sem-badge sem-{{ ch.semaforo }}">{{ ch.tempo_restante_str }}</span>
+          {% endif %}
+        </div>
+        {% if ch.status == 'devolvido' and ch.devolvido_por_nome %}
+          <div class="devolvido-tag">↩ Devolvido por {{ ch.devolvido_por_nome }}</div>
+        {% endif %}
+        <div class="ch-title">{{ ch.titulo }}</div>
+        <div class="ch-empresa">{{ ch.empresa.razao_social }}</div>
+        <div class="ch-actions">
+          <form method="POST" action="{{ url_for('area_colab.pegar_chamado', id=ch.id) }}" style="display:inline;">
+            <button type="submit" class="btn-pegar">Pegar chamado</button>
+          </form>
+          <a href="{{ url_for('area_colab.chamado_detalhe', id=ch.id) }}" class="btn-ver">Ver</a>
+        </div>
+      </div>
+      {% else %}
+      <div class="k-empty">Nenhum chamado em aberto.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ── REALIZANDO ────────────────────────────────────────── -->
+  <div class="k-col">
+    <div class="k-head">
+      <span class="k-col-dot kd-realizando"></span>
+      <span class="k-title">Realizando</span>
+      <span class="k-count kc-realizando">{{ realizando|length }}</span>
+    </div>
+    <div class="k-cards">
+      {% for ch in realizando %}
+      <div class="ch-card">
+        <div class="ch-card-top">
+          <span class="ch-num">{{ ch.numero }}</span>
+          <span class="tipo-badge tb-{{ ch.tipo }}">{{ ch.tipo_label }}</span>
+          {% if ch.semaforo %}
+            <span class="sem-badge sem-{{ ch.semaforo }}">{{ ch.tempo_restante_str }}</span>
+          {% endif %}
+        </div>
+        {% if ch.responsavel %}
+          <div class="responsavel-tag">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            {{ ch.responsavel.nome }}
+          </div>
+        {% endif %}
+        <div class="ch-title">{{ ch.titulo }}</div>
+        <div class="ch-empresa">{{ ch.empresa.razao_social }}</div>
+        <div class="ch-actions">
+          {% if ch.atribuido_a == current_user.id or current_user.role == 'admin' %}
+            <button type="button" class="btn-finalizar"
+                    onclick="abrirFinalizar({{ ch.id }}, '{{ ch.numero }}')">Finalizar</button>
+            <button type="button" class="btn-devolver"
+                    onclick="abrirDevolver({{ ch.id }}, '{{ ch.numero }}')">Devolver</button>
+          {% endif %}
+          <a href="{{ url_for('area_colab.chamado_detalhe', id=ch.id) }}" class="btn-ver">Ver</a>
+        </div>
+      </div>
+      {% else %}
+      <div class="k-empty">Nenhum chamado em andamento.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ── FINALIZADO ────────────────────────────────────────── -->
+  <div class="k-col">
+    <div class="k-head">
+      <span class="k-col-dot kd-finalizado"></span>
+      <span class="k-title">Finalizado</span>
+      <span class="k-count kc-finalizado">{{ finalizado|length }}</span>
+    </div>
+
+    <!-- Filtros -->
+    <form method="GET" action="{{ url_for('area_colab.dashboard') }}" class="k-filters">
+      <select name="empresa_id" class="k-f-input" style="max-width:120px;">
+        <option value="">Empresa</option>
+        {% for emp in empresas_filtro %}
+          <option value="{{ emp.id }}" {% if f_empresa == emp.id %}selected{% endif %}>
+            {{ emp.razao_social|truncate(20, True, '…') }}
+          </option>
+        {% endfor %}
+      </select>
+      <select name="tipo" class="k-f-input">
+        <option value="">Tipo</option>
+        <option value="rescisao"      {% if f_tipo == 'rescisao' %}selected{% endif %}>Rescisão</option>
+        <option value="certidao"      {% if f_tipo == 'certidao' %}selected{% endif %}>Certidão</option>
+        <option value="notas_fiscais" {% if f_tipo == 'notas_fiscais' %}selected{% endif %}>Notas Fiscais</option>
+      </select>
+      <input type="date" name="de"  class="k-f-input" value="{{ f_de }}"  title="De">
+      <input type="date" name="ate" class="k-f-input" value="{{ f_ate }}" title="Até">
+      <button type="submit" class="k-f-btn">Filtrar</button>
+      {% if f_empresa or f_tipo or f_colab or f_de or f_ate %}
+        <a href="{{ url_for('area_colab.dashboard') }}" class="k-f-clear">Limpar</a>
+      {% endif %}
+    </form>
+
+    <div class="k-cards">
+      {% for ch in finalizado %}
+      <div class="ch-card">
+        <div class="ch-card-top">
+          <span class="ch-num">{{ ch.numero }}</span>
+          <span class="tipo-badge tb-{{ ch.tipo }}">{{ ch.tipo_label }}</span>
+        </div>
+        <div class="ch-title">{{ ch.titulo }}</div>
+        <div class="ch-empresa">{{ ch.empresa.razao_social }}</div>
+        {% if ch.finalizado_por_nome %}
+        <div style="font-size:0.7rem;color:var(--muted);margin-top:4px;">
+          ✓ {{ ch.finalizado_por_nome }}
+          {% if ch.finalizado_em %}· {{ ch.finalizado_em.strftime('%d/%m/%y') }}{% endif %}
+        </div>
+        {% endif %}
+        <div class="ch-actions" style="margin-top:8px;">
+          <a href="{{ url_for('area_colab.chamado_detalhe', id=ch.id) }}" class="btn-ver">Ver detalhe</a>
+        </div>
+      </div>
+      {% else %}
+      <div class="k-empty">
+        {% if f_empresa or f_tipo or f_colab or f_de or f_ate %}
+          Nenhum chamado encontrado com estes filtros.
+        {% else %}
+          Nenhum chamado finalizado.
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div><!-- /kanban -->
+
+<!-- ── MODAL FINALIZAR ───────────────────────────────────── -->
+<div class="modal-wrap" id="modal-finalizar">
+  <div class="modal-box">
+    <div class="modal-icon mi-green">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </div>
+    <div class="modal-title">Finalizar chamado <span id="fin-num"></span>?</div>
+    <div class="modal-desc">Esta ação não pode ser desfeita. O cliente será notificado automaticamente por comunicado.</div>
+    <form id="form-finalizar" method="POST">
+      <div class="modal-actions">
+        <button type="button" class="btn-cancelar" onclick="fecharFinalizar()">Cancelar</button>
+        <button type="submit" class="btn-confirmar">Confirmar finalização</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── MODAL DEVOLVER ────────────────────────────────────── -->
+<div class="modal-wrap" id="modal-devolver">
+  <div class="modal-box">
+    <div class="modal-icon mi-gold">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/>
+      </svg>
+    </div>
+    <div class="modal-title">Devolver chamado <span id="dev-num"></span>?</div>
+    <div class="modal-desc">O chamado voltará para a fila de "Em Aberto" e ficará disponível para outro colaborador.</div>
+    <form id="form-devolver" method="POST">
+      <textarea name="motivo" class="modal-textarea" placeholder="Motivo (opcional)…"></textarea>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancelar" onclick="fecharDevolver()">Cancelar</button>
+        <button type="submit" class="btn-conf-gold">Devolver chamado</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function abrirFinalizar(id, num) {
+    document.getElementById('fin-num').textContent = num;
+    document.getElementById('form-finalizar').action = '/colab/chamados/' + id + '/finalizar';
+    document.getElementById('modal-finalizar').classList.add('show');
+  }
+  function fecharFinalizar() {
+    document.getElementById('modal-finalizar').classList.remove('show');
+  }
+  function abrirDevolver(id, num) {
+    document.getElementById('dev-num').textContent = num;
+    document.getElementById('form-devolver').action = '/colab/chamados/' + id + '/devolver';
+    document.getElementById('form-devolver').querySelector('textarea').value = '';
+    document.getElementById('modal-devolver').classList.add('show');
+  }
+  function fecharDevolver() {
+    document.getElementById('modal-devolver').classList.remove('show');
+  }
+  // Fechar modal clicando fora
+  document.querySelectorAll('.modal-wrap').forEach(m => {
+    m.addEventListener('click', function(e) {
+      if (e.target === this) {
+        this.classList.remove('show');
+      }
+    });
+  });
+</script>
+{% endblock %}

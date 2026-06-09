@@ -1,0 +1,135 @@
+{% extends 'area_cliente/layout.html' %}
+
+{% block title %}Abrir Chamado{% endblock %}
+{% block topbar_title %}Novo Chamado{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Abrir Chamado</h1>
+  <p>Selecione o tipo de solicitação e preencha os dados necessários.</p>
+</div>
+
+<form method="POST" action="{{ url_for('area_cliente.abrir_chamado') }}" id="form-chamado">
+  <div class="form-card">
+
+    <!-- Tipo selector -->
+    <div class="sh" style="margin-bottom:16px;"><span class="sh-title">Tipo de Solicitação</span></div>
+    <div class="tipo-grid" style="margin-bottom:20px;">
+
+      <label class="tipo-label">
+        <input type="radio" name="tipo" value="rescisao" required>
+        <div class="tipo-inner">
+          <div class="tipo-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/>
+              <line x1="20" y1="4" x2="8.12" y2="15.88"/>
+              <line x1="14.47" y1="14.48" x2="20" y2="20"/>
+              <line x1="8.12" y1="8.12" x2="12" y2="12"/>
+            </svg>
+          </div>
+          <strong>Cálculo de Rescisão</strong>
+          <span>Solicite o cálculo das verbas rescisórias de um funcionário</span>
+        </div>
+      </label>
+
+      <label class="tipo-label">
+        <input type="radio" name="tipo" value="certidao" required>
+        <div class="tipo-inner">
+          <div class="tipo-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <polyline points="9 15 11 17 15 13"/>
+            </svg>
+          </div>
+          <strong>Pedir Certidão</strong>
+          <span>Solicite certidões A, B ou C junto ao escritório</span>
+        </div>
+      </label>
+
+      <label class="tipo-label">
+        <input type="radio" name="tipo" value="notas_fiscais" required>
+        <div class="tipo-inner">
+          <div class="tipo-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <line x1="10" y1="9" x2="8" y2="9"/>
+            </svg>
+          </div>
+          <strong>Notas Fiscais</strong>
+          <span>Solicite o envio das suas notas fiscais emitidas</span>
+        </div>
+      </label>
+
+    </div>
+
+    <!-- Campo extra: rescisão -->
+    <div id="campo-rescisao" class="extra-field" style="display:none;">
+      <label class="field-label" for="nome_funcionario">Nome do Funcionário <span class="req">*</span></label>
+      <input type="text" id="nome_funcionario" name="nome_funcionario" class="form-control"
+             placeholder="Nome completo do funcionário">
+    </div>
+
+    <!-- Campo extra: certidão -->
+    <div id="campo-certidao" class="extra-field" style="display:none;">
+      <label class="field-label">Tipo de Certidão <span class="req">*</span></label>
+      <div class="cert-opts">
+        <label class="cert-opt">
+          <input type="radio" name="tipo_certidao" value="A">
+          <div class="cert-opt-inner">Certidão A</div>
+        </label>
+        <label class="cert-opt">
+          <input type="radio" name="tipo_certidao" value="B">
+          <div class="cert-opt-inner">Certidão B</div>
+        </label>
+        <label class="cert-opt">
+          <input type="radio" name="tipo_certidao" value="C">
+          <div class="cert-opt-inner">Certidão C</div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Descrição adicional -->
+    <div class="desc-group">
+      <label class="field-label" for="descricao">Descrição adicional <span style="color:var(--muted);font-weight:400;">(opcional)</span></label>
+      <textarea id="descricao" name="descricao" class="form-control"
+                placeholder="Informe detalhes, período de referência, ou qualquer informação que facilite o atendimento…"></textarea>
+    </div>
+
+    <button type="submit" class="btn-submit">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </svg>
+      Enviar Solicitação
+    </button>
+
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const radios = document.querySelectorAll('input[name="tipo"]');
+  const campoRescisao = document.getElementById('campo-rescisao');
+  const campoCertidao = document.getElementById('campo-certidao');
+  const nomeFuncionario = document.getElementById('nome_funcionario');
+
+  radios.forEach(radio => {
+    radio.addEventListener('change', function () {
+      campoRescisao.style.display = 'none';
+      campoCertidao.style.display = 'none';
+      nomeFuncionario.required = false;
+
+      if (this.value === 'rescisao') {
+        campoRescisao.style.display = 'block';
+        nomeFuncionario.required = true;
+      } else if (this.value === 'certidao') {
+        campoCertidao.style.display = 'block';
+      }
+    });
+  });
+</script>
+{% endblock %}

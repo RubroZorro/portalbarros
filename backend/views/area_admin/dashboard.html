@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Barros &amp; Barros</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --navy: #1B2D6B; --gold: #C9A227; --white: #fff; --off: #f4f6fb; --text: #1a2340; --muted: #6b7280; --border: #e5e7eb; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--off); color: var(--text); }
+    .topbar {
+      background: var(--navy); color: #fff; padding: 0 28px; height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .brand { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 700; }
+    .brand .g { color: var(--gold); }
+    .tag { font-size: 0.72rem; background: rgba(201,162,39,0.2); color: var(--gold); padding: 3px 10px; border-radius: 100px; }
+    .logout { color: rgba(255,255,255,0.6); text-decoration: none; font-size: 0.82rem; }
+    .logout:hover { color: #fff; }
+    .main { padding: 32px 28px; }
+    h1 { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; color: var(--navy); margin-bottom: 6px; }
+    .sub { font-size: 0.82rem; color: var(--muted); margin-bottom: 28px; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 16px; margin-bottom: 32px; }
+    .stat { background: #fff; border-radius: 10px; border: 1px solid var(--border); padding: 20px; }
+    .stat-val { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 700; color: var(--navy); }
+    .stat-lbl { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+    th { background: var(--off); padding: 10px 16px; text-align: left; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); }
+    td { padding: 13px 16px; font-size: 0.84rem; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--off); }
+    .badge { display: inline-block; font-size: 0.68rem; font-weight: 500; padding: 3px 9px; border-radius: 100px; }
+    .b-pendente   { background: rgba(201,162,39,0.12); color: #856300; }
+    .b-recebido   { background: rgba(37,99,235,0.10);  color: #1d4ed8; }
+    .b-finalizado { background: rgba(22,163,74,0.10);  color: #15803d; }
+    .update-form { display: inline-flex; align-items: center; gap: 6px; }
+    select { padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.78rem; font-family: 'DM Sans', sans-serif; }
+    .btn-sm { padding: 4px 12px; background: var(--navy); color: #fff; border: none; border-radius: 6px; font-size: 0.78rem; cursor: pointer; }
+    .section-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .section-title::before { content: ''; width: 3px; height: 15px; background: var(--gold); border-radius: 2px; }
+  </style>
+</head>
+<body>
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:14px;">
+    <div class="brand"><span class="g">B</span>B Contabilidade</div>
+    <span class="tag">Admin</span>
+  </div>
+  <a href="{{ url_for('auth.logout') }}" class="logout">Sair →</a>
+</div>
+<div class="main">
+  <h1>Painel Administrativo</h1>
+  <p class="sub">Olá, {{ current_user.nome }}. Gerencie chamados, clientes e comunicados.</p>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-val">{{ chamados_pendentes }}</div>
+      <div class="stat-lbl">Chamados pendentes</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">{{ total_empresas }}</div>
+      <div class="stat-lbl">Empresas ativas</div>
+    </div>
+  </div>
+
+  <div class="section-title">Chamados Recentes</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Nº</th>
+        <th>Empresa</th>
+        <th>Assunto</th>
+        <th>Tipo</th>
+        <th>Status</th>
+        <th>Ação</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ch in chamados_recentes %}
+      <tr>
+        <td>{{ ch.numero }}</td>
+        <td>{{ ch.empresa.razao_social }}</td>
+        <td>{{ ch.titulo }}</td>
+        <td>{{ ch.tipo_label }}</td>
+        <td><span class="badge b-{{ ch.status }}">{{ ch.status_label }}</span></td>
+        <td>
+          <form class="update-form" method="POST" action="{{ url_for('area_colab.atualizar_status', id=ch.id) }}">
+            <select name="status">
+              <option value="pendente"   {% if ch.status == 'pendente'   %}selected{% endif %}>Pendente</option>
+              <option value="recebido"   {% if ch.status == 'recebido'   %}selected{% endif %}>Recebido</option>
+              <option value="finalizado" {% if ch.status == 'finalizado' %}selected{% endif %}>Finalizado</option>
+            </select>
+            <button type="submit" class="btn-sm">Salvar</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px;">Nenhum chamado encontrado.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+</body>
+</html>

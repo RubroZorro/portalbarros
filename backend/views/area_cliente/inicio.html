@@ -1,0 +1,153 @@
+{% extends 'area_cliente/layout.html' %}
+
+{% block title %}Início{% endblock %}
+{% block topbar_title %}Painel do Cliente{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Olá, {{ current_user.nome.split()[0] }} — bem-vindo ao seu portal.</h1>
+  <p>{{ data_hoje }}</p>
+</div>
+
+<!-- Stats -->
+<div class="stats-row">
+  <div class="stat-card t-red">
+    <div class="sc-icon i-red">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+    </div>
+    <div class="sc-val">{{ chamados_abertos }}</div>
+    <div class="sc-label">Chamados em aberto</div>
+  </div>
+  <div class="stat-card t-gold">
+    <div class="sc-icon i-gold">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 01-3.46 0"/>
+      </svg>
+    </div>
+    <div class="sc-val">{{ nao_lidos }}</div>
+    <div class="sc-label">Comunicados não lidos</div>
+  </div>
+  <div class="stat-card t-green">
+    <div class="sc-icon i-green">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </div>
+    <div class="sc-val">{{ finalizados_mes }}</div>
+    <div class="sc-label">Chamados finalizados este mês</div>
+  </div>
+</div>
+
+<!-- Content grid -->
+<div class="content-grid">
+
+  <!-- Comunicados recentes -->
+  <div>
+    <div class="sh">
+      <span class="sh-title">Comunicados Recentes</span>
+      <a href="{{ url_for('area_cliente.comunicados') }}" class="sh-link">Ver todos →</a>
+    </div>
+    <div class="com-list">
+      {% for c in comunicados %}
+      <div class="com-card {% if c.id not in lidas_set %}unread{% endif %}">
+        <div class="com-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+        </div>
+        <div class="com-body">
+          <div class="com-title">{{ c.titulo }}</div>
+          <div class="com-preview">{{ c.conteudo[:120] }}{% if c.conteudo|length > 120 %}…{% endif %}</div>
+          <div class="com-footer">
+            <span class="com-date">{{ c.data_formatada }}</span>
+            {% if c.id not in lidas_set %}<span class="tag-new">Não lido</span>{% endif %}
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <p style="font-size:0.84rem;color:var(--muted);padding:16px 0;">Nenhum comunicado ainda.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Coluna direita -->
+  <div class="right-col">
+
+    <!-- Atalhos -->
+    <div>
+      <div class="sh"><span class="sh-title">Atalhos Rápidos</span></div>
+      <div class="qa-grid">
+        <a class="qa-card" href="{{ url_for('area_cliente.abrir_chamado') }}">
+          <div class="qa-icon i-navy">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+            </svg>
+          </div>
+          <div class="qa-label">Abrir Chamado</div>
+          <div class="qa-desc">Nova solicitação</div>
+        </a>
+        <a class="qa-card" href="{{ url_for('area_cliente.comunicados') }}">
+          <div class="qa-icon i-gold">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 01-3.46 0"/>
+            </svg>
+          </div>
+          <div class="qa-label">Comunicados</div>
+          <div class="qa-desc">{% if nao_lidos > 0 %}{{ nao_lidos }} não lido{{ 's' if nao_lidos != 1 }}{% else %}Tudo em dia{% endif %}</div>
+        </a>
+        <a class="qa-card disabled">
+          <div class="qa-icon" style="background:rgba(107,114,128,0.1);color:#9ca3af;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+            </svg>
+          </div>
+          <div class="qa-label">Boletos</div>
+          <div class="qa-desc soon">Em breve</div>
+        </a>
+        <a class="qa-card disabled">
+          <div class="qa-icon" style="background:rgba(107,114,128,0.1);color:#9ca3af;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/>
+            </svg>
+          </div>
+          <div class="qa-label">Documentos</div>
+          <div class="qa-desc soon">Em breve</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Chamados recentes -->
+    <div>
+      <div class="sh">
+        <span class="sh-title">Meus Chamados</span>
+        <a href="{{ url_for('area_cliente.meus_chamados') }}" class="sh-link">Ver todos →</a>
+      </div>
+      <div class="chamados-box">
+        {% for ch in chamados %}
+        <a class="ch-item" href="{{ url_for('area_cliente.meus_chamados') }}">
+          <span class="ch-num">{{ ch.numero }}</span>
+          <div class="ch-info">
+            <div class="ch-title">{{ ch.titulo }}</div>
+            <div class="ch-date">{{ ch.data_formatada }}</div>
+          </div>
+          <span class="status {{ ch.status_css }}">{{ ch.status_label }}</span>
+          <span class="ch-arrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </span>
+        </a>
+        {% else %}
+        <div style="padding:20px 16px;font-size:0.82rem;color:var(--muted);">Nenhum chamado aberto.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

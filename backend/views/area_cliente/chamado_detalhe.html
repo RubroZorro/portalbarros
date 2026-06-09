@@ -1,0 +1,207 @@
+{% extends 'area_cliente/layout.html' %}
+{% block title %}Chamado {{ chamado.numero }}{% endblock %}
+{% block topbar_title %}Detalhe do Chamado{% endblock %}
+
+{% block head %}
+<style>
+  .steps { display: flex; align-items: center; margin: 24px 0; }
+  .step { display: flex; align-items: center; gap: 8px; }
+  .step-circle {
+    width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid var(--border); background: white;
+    font-size: 0.7rem; color: var(--muted);
+  }
+  .step-circle.done    { background: var(--navy); border-color: var(--navy); color: white; }
+  .step-circle.current { background: var(--gold); border-color: var(--gold); color: white; }
+  .step-label { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+  .step-label.done    { color: var(--navy); font-weight: 500; }
+  .step-label.current { color: #856300; font-weight: 500; }
+  .step-line { flex: 1; height: 2px; background: var(--border); min-width: 16px; }
+  .step-line.done { background: var(--navy); }
+  .info-dl { width: 100%; border-collapse: collapse; }
+  .info-dl tr td { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.84rem; }
+  .info-dl tr:last-child td { border-bottom: none; }
+  .info-dl td:first-child { color: var(--muted); width: 130px; }
+  .info-dl td:last-child { font-weight: 500; }
+  .dl-card {
+    background: white; border-radius: 12px; border: 1px solid var(--border);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05); overflow: hidden; margin-bottom: 20px;
+  }
+  .dl-card-header {
+    padding: 13px 18px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.88rem; font-weight: 600; color: var(--text);
+  }
+  .dl-card-header::before { content: ''; display: block; width: 3px; height: 14px; background: var(--gold); border-radius: 2px; }
+  .dl-card-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; }
+  .dl-item { display: flex; align-items: center; gap: 12px; padding: 10px 13px; background: var(--off); border: 1px solid var(--border); border-radius: 8px; }
+  .dl-icon { width: 34px; height: 34px; border-radius: 8px; background: rgba(27,45,107,0.08); color: var(--navy); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .dl-icon svg { width: 15px; height: 15px; }
+  .dl-info { flex: 1; min-width: 0; }
+  .dl-nome { font-size: 0.83rem; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dl-meta { font-size: 0.68rem; color: var(--muted); margin-top: 1px; }
+  .btn-baixar { padding: 6px 13px; background: var(--navy); color: white; border: none; border-radius: 7px; font-size: 0.75rem; font-weight: 500; text-decoration: none; display: inline-block; font-family: 'DM Sans',sans-serif; white-space: nowrap; }
+  .btn-baixar:hover { background: var(--navy-light); }
+  .status-info { display: flex; align-items: center; gap: 10px; padding: 14px 18px; background: white; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 20px; }
+  .si-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .si-icon svg { width: 18px; height: 18px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:16px;">
+  <a href="{{ url_for('area_cliente.meus_chamados') }}"
+     style="display:inline-flex;align-items:center;gap:6px;font-size:0.82rem;color:var(--muted);text-decoration:none;">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    Meus Chamados
+  </a>
+</div>
+
+<div class="page-header" style="margin-bottom:20px;">
+  <div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;">
+      <h1 style="font-size:1.4rem;">{{ chamado.numero }}</h1>
+      <span class="status {{ chamado.status_css }}" style="font-size:0.78rem;padding:4px 12px;">{{ chamado.status_label }}</span>
+    </div>
+    <p>{{ chamado.titulo }}</p>
+  </div>
+</div>
+
+<!-- Steps de progresso -->
+<div class="steps">
+  {% set s1_done = true %}
+  {% set s2_done = chamado.status in ('em_realizacao', 'finalizado') %}
+  {% set s3_done = chamado.status == 'finalizado' %}
+  {% set s2_current = chamado.status in ('pendente', 'devolvido') %}
+
+  <div class="step">
+    <div class="step-circle done">✓</div>
+    <span class="step-label done">Enviado</span>
+  </div>
+  <div class="step-line {% if s2_done %}done{% endif %}"></div>
+  <div class="step">
+    <div class="step-circle {% if s2_done %}done{% elif not s2_current %}current{% endif %}">
+      {% if s2_done %}✓{% else %}2{% endif %}
+    </div>
+    <span class="step-label {% if s2_done %}done{% endif %}">Em atendimento</span>
+  </div>
+  <div class="step-line {% if s3_done %}done{% endif %}"></div>
+  <div class="step">
+    <div class="step-circle {% if s3_done %}done{% endif %}">
+      {% if s3_done %}✓{% else %}3{% endif %}
+    </div>
+    <span class="step-label {% if s3_done %}done{% endif %}">Concluído</span>
+  </div>
+</div>
+
+<!-- Mensagem de status -->
+{% if chamado.status == 'pendente' or chamado.status == 'devolvido' %}
+<div class="status-info">
+  <div class="si-icon" style="background:rgba(201,162,39,0.1);color:#856300;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+  </div>
+  <div>
+    <div style="font-size:0.85rem;font-weight:600;color:var(--text);">Aguardando atendimento</div>
+    <div style="font-size:0.78rem;color:var(--muted);">Sua solicitação está na fila e será atendida em breve.</div>
+  </div>
+</div>
+{% elif chamado.status == 'em_realizacao' %}
+<div class="status-info">
+  <div class="si-icon" style="background:rgba(37,99,235,0.1);color:#1d4ed8;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+  </div>
+  <div>
+    <div style="font-size:0.85rem;font-weight:600;color:var(--text);">Em atendimento</div>
+    <div style="font-size:0.78rem;color:var(--muted);">Nossa equipe está trabalhando na sua solicitação.</div>
+  </div>
+</div>
+{% elif chamado.status == 'finalizado' %}
+<div class="status-info">
+  <div class="si-icon" style="background:rgba(22,163,74,0.1);color:#15803d;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+  </div>
+  <div>
+    <div style="font-size:0.85rem;font-weight:600;color:#15803d;">Solicitação concluída</div>
+    <div style="font-size:0.78rem;color:var(--muted);">
+      {% if chamado.finalizado_por_nome %}Finalizado por {{ chamado.finalizado_por_nome }}.{% endif %}
+      {% if chamado.anexos|length > 0 %}Há {{ chamado.anexos|length }} documento(s) disponíveis abaixo.{% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Info do chamado -->
+<div class="dl-card">
+  <div class="dl-card-header">Detalhes da Solicitação</div>
+  <div style="padding:0 18px 4px;">
+    <table class="info-dl">
+      <tr>
+        <td>Tipo</td>
+        <td>{{ chamado.tipo_label }}{% if chamado.tipo_certidao %} — Certidão {{ chamado.tipo_certidao }}{% endif %}</td>
+      </tr>
+      {% if chamado.nome_funcionario %}
+      <tr>
+        <td>Funcionário</td>
+        <td>{{ chamado.nome_funcionario }}</td>
+      </tr>
+      {% endif %}
+      <tr>
+        <td>Aberto em</td>
+        <td>{{ chamado.data_formatada }}</td>
+      </tr>
+      {% if chamado.prazo_limite %}
+      <tr>
+        <td>Prazo previsto</td>
+        <td>{{ chamado.prazo_formatado }}</td>
+      </tr>
+      {% endif %}
+      {% if chamado.descricao %}
+      <tr>
+        <td>Descrição</td>
+        <td style="white-space:pre-wrap;line-height:1.5;">{{ chamado.descricao }}</td>
+      </tr>
+      {% endif %}
+    </table>
+  </div>
+</div>
+
+<!-- Documentos para download (só quando finalizado) -->
+{% if chamado.status == 'finalizado' %}
+  {% if chamado.anexos %}
+  <div class="dl-card">
+    <div class="dl-card-header">Documentos para Download</div>
+    <div class="dl-card-body">
+      {% for a in chamado.anexos %}
+      <div class="dl-item">
+        <div class="dl-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </div>
+        <div class="dl-info">
+          <div class="dl-nome">{{ a.nome_original }}</div>
+          <div class="dl-meta">{{ a.tamanho_str }}</div>
+        </div>
+        <a href="{{ url_for('area_cliente.download_anexo', chamado_id=chamado.id, anexo_id=a.id) }}"
+           class="btn-baixar">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="display:inline;vertical-align:middle;margin-right:4px;">
+            <polyline points="8 17 12 21 16 17"/>
+            <line x1="12" y1="12" x2="12" y2="21"/>
+            <path d="M20.88 18.09A5 5 0 0018 9h-1.26A8 8 0 103 16.29"/>
+          </svg>
+          Baixar
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <div style="background:white;border-radius:10px;border:1px solid var(--border);padding:20px 18px;margin-bottom:20px;font-size:0.84rem;color:var(--muted);">
+    Chamado finalizado. Nenhum documento foi anexado nesta solicitação.
+  </div>
+  {% endif %}
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal do Cliente — Barros &amp; Barros Contabilidade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:       #1B2D6B;
+      --navy-deep:  #111e4a;
+      --navy-light: #2a3f8f;
+      --gold:       #C9A227;
+      --gold-light: #e0b83a;
+      --white:      #ffffff;
+      --off:        #f4f6fb;
+      --sidebar-w:  248px;
+      --topbar-h:   60px;
+      --text:       #1a2340;
+      --muted:      #6b7280;
+      --border:     #e5e7eb;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--off);
+      color: var(--text);
+    }
+
+    /* ───────────────────────── SIDEBAR ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--navy);
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.28s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* Logo */
+    .sidebar-logo {
+      padding: 18px 20px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+    .bb-mark {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 700;
+      font-size: 2rem;
+      line-height: 1;
+      letter-spacing: -1px;
+      flex-shrink: 0;
+    }
+    .bb-mark .b1 { color: var(--gold); }
+    .bb-mark .b2 { color: #fff; }
+    .logo-sep {
+      width: 1px; height: 32px;
+      background: rgba(201,162,39,0.4);
+      flex-shrink: 0;
+    }
+    .logo-text { line-height: 1.2; }
+    .logo-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 700;
+      font-size: 0.82rem;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .logo-sub {
+      font-size: 0.58rem;
+      font-weight: 300;
+      letter-spacing: 0.18em;
+      color: var(--gold);
+      text-transform: uppercase;
+      border-top: 1px solid rgba(201,162,39,0.35);
+      padding-top: 3px;
+      margin-top: 3px;
+    }
+
+    /* Nav */
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 0;
+    }
+    .sidebar-nav::-webkit-scrollbar { width: 4px; }
+    .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
+
+    .nav-label {
+      font-size: 0.58rem;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+      padding: 10px 20px 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 10px 20px;
+      color: rgba(255,255,255,0.65);
+      font-size: 0.865rem;
+      font-weight: 400;
+      text-decoration: none;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.15s, color 0.15s;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+    .nav-item:hover {
+      background: rgba(255,255,255,0.06);
+      color: #fff;
+    }
+    .nav-item.active {
+      background: rgba(201,162,39,0.14);
+      color: #fff;
+      font-weight: 500;
+    }
+    .nav-item.active::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 4px; bottom: 4px;
+      width: 3px;
+      background: var(--gold);
+      border-radius: 0 3px 3px 0;
+    }
+    .nav-item svg {
+      width: 17px; height: 17px;
+      flex-shrink: 0;
+      opacity: 0.7;
+    }
+    .nav-item.active svg,
+    .nav-item:hover  svg { opacity: 1; }
+
+    .nav-badge {
+      margin-left: auto;
+      background: #dc2626;
+      color: #fff;
+      font-size: 0.62rem;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 100px;
+      line-height: 1.5;
+    }
+    .nav-soon {
+      margin-left: auto;
+      font-size: 0.58rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: var(--gold);
+      background: rgba(201,162,39,0.14);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .nav-item.locked {
+      opacity: 0.42;
+      pointer-events: none;
+    }
+
+    /* Sidebar user footer */
+    .sidebar-footer {
+      flex-shrink: 0;
+      padding: 14px 18px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .s-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .s-avatar {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: rgba(201,162,39,0.18);
+      border: 1.5px solid rgba(201,162,39,0.5);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--gold);
+      flex-shrink: 0;
+    }
+    .s-info { overflow: hidden; }
+    .s-name {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .s-cnpj { font-size: 0.62rem; color: rgba(255,255,255,0.38); }
+
+    /* ───────────────────────── TOPBAR ── */
+    .topbar {
+      position: fixed;
+      top: 0;
+      left: var(--sidebar-w);
+      right: 0;
+      height: var(--topbar-h);
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 10px;
+      z-index: 100;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+    }
+
+    .hamburger {
+      display: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      color: var(--navy);
+      flex-shrink: 0;
+    }
+    .hamburger svg { display: block; width: 22px; height: 22px; }
+
+    /* Mobile logo in topbar (hidden on desktop) */
+    .topbar-logo {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+    .topbar-logo .bb-mark { font-size: 1.5rem; }
+    .topbar-logo .logo-sep { height: 24px; }
+    .topbar-logo .logo-name { font-size: 0.72rem; }
+    .topbar-logo .logo-sub  { font-size: 0.52rem; }
+
+    .topbar-title {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .topbar-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .icon-btn {
+      position: relative;
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--muted);
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, color 0.15s;
+    }
+    .icon-btn:hover { background: var(--off); color: var(--navy); }
+    .icon-btn svg   { width: 19px; height: 19px; }
+
+    .notif-dot {
+      position: absolute;
+      top: 7px; right: 7px;
+      width: 8px; height: 8px;
+      background: #dc2626;
+      border-radius: 50%;
+      border: 2px solid #fff;
+    }
+
+    .topbar-avatar {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: var(--navy);
+      border: 2px solid var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--gold);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    /* ───────────────────────── MAIN ── */
+    .main {
+      margin-left: var(--sidebar-w);
+      margin-top: var(--topbar-h);
+      padding: 28px 28px 48px;
+      min-height: calc(100vh - var(--topbar-h));
+    }
+
+    /* Welcome */
+    .welcome {
+      margin-bottom: 24px;
+    }
+    .welcome h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.65rem;
+      font-weight: 700;
+      color: var(--navy);
+      line-height: 1.2;
+    }
+    .welcome p {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ── Stats row ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: 12px 12px 0 0;
+    }
+    .stat-card.t-navy::after  { background: var(--navy); }
+    .stat-card.t-gold::after  { background: var(--gold); }
+    .stat-card.t-green::after { background: #16a34a; }
+    .stat-card.t-red::after   { background: #dc2626; }
+
+    .sc-icon {
+      width: 36px; height: 36px;
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 14px;
+    }
+    .sc-icon svg { width: 17px; height: 17px; }
+    .i-navy  { background: rgba(27,45,107,0.1);  color: var(--navy); }
+    .i-gold  { background: rgba(201,162,39,0.12); color: #a07c10; }
+    .i-green { background: rgba(22,163,74,0.1);  color: #15803d; }
+    .i-red   { background: rgba(220,38,38,0.1);  color: #b91c1c; }
+
+    .sc-val {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+    }
+    .sc-label {
+      font-size: 0.775rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ── Content grid ── */
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 308px;
+      gap: 20px;
+    }
+
+    /* Section header */
+    .sh {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .sh-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sh-title::before {
+      content: '';
+      display: block;
+      width: 3px; height: 15px;
+      background: var(--gold);
+      border-radius: 2px;
+    }
+    .sh-link {
+      font-size: 0.75rem;
+      color: var(--navy-light);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+    .sh-link:hover { color: var(--navy); text-decoration: underline; }
+
+    /* Comunicados */
+    .com-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .com-card {
+      background: var(--white);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      padding: 15px 16px;
+      display: flex;
+      gap: 13px;
+      align-items: flex-start;
+    }
+    .com-card.unread {
+      border-left: 3px solid var(--navy);
+    }
+
+    .com-icon {
+      width: 38px; height: 38px;
+      border-radius: 9px;
+      background: rgba(27,45,107,0.08);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      color: var(--navy);
+    }
+    .com-icon svg { width: 16px; height: 16px; }
+
+    .com-body { flex: 1; min-width: 0; }
+    .com-title {
+      font-size: 0.86rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .com-preview {
+      font-size: 0.775rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+    .com-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+    }
+    .com-date { font-size: 0.68rem; color: var(--muted); }
+    .tag-new {
+      font-size: 0.62rem;
+      font-weight: 600;
+      color: var(--navy);
+      background: rgba(27,45,107,0.09);
+      padding: 2px 7px;
+      border-radius: 100px;
+    }
+
+    /* Right column */
+    .right-col { display: flex; flex-direction: column; gap: 20px; }
+
+    /* Quick actions */
+    .qa-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .qa-card {
+      background: var(--white);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      text-decoration: none;
+      color: var(--text);
+      transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+      cursor: pointer;
+    }
+    .qa-card:hover {
+      border-color: var(--navy);
+      box-shadow: 0 4px 14px rgba(27,45,107,0.12);
+      transform: translateY(-2px);
+    }
+    .qa-card.disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .qa-icon {
+      width: 36px; height: 36px;
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .qa-icon svg { width: 17px; height: 17px; }
+
+    .qa-label { font-size: 0.82rem; font-weight: 600; }
+    .qa-desc  { font-size: 0.7rem; color: var(--muted); }
+    .qa-desc.soon { color: var(--gold); font-weight: 500; }
+
+    /* Chamados mini list */
+    .chamados-box {
+      background: var(--white);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
+
+    .ch-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.12s;
+      cursor: pointer;
+      text-decoration: none;
+      color: var(--text);
+    }
+    .ch-item:last-child { border-bottom: none; }
+    .ch-item:hover { background: var(--off); }
+
+    .ch-num {
+      font-size: 0.68rem;
+      color: var(--muted);
+      flex-shrink: 0;
+      width: 40px;
+    }
+    .ch-info { flex: 1; min-width: 0; }
+    .ch-title {
+      font-size: 0.82rem;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ch-date { font-size: 0.68rem; color: var(--muted); margin-top: 1px; }
+
+    .status {
+      font-size: 0.68rem;
+      font-weight: 500;
+      padding: 3px 9px;
+      border-radius: 100px;
+      flex-shrink: 0;
+    }
+    .s-open     { background: rgba(220,38,38,0.1);  color: #b91c1c; }
+    .s-progress { background: rgba(37,99,235,0.1);  color: #1d4ed8; }
+    .s-waiting  { background: rgba(217,119,6,0.1);  color: #b45309; }
+    .s-resolved { background: rgba(22,163,74,0.1);  color: #15803d; }
+
+    .ch-arrow { color: var(--muted); flex-shrink: 0; }
+    .ch-arrow svg { width: 13px; height: 13px; }
+
+    /* ── OVERLAY ── */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 150;
+      backdrop-filter: blur(2px);
+    }
+    .overlay.on { display: block; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .content-grid { grid-template-columns: 1fr; }
+      .right-col { flex-direction: row; flex-wrap: wrap; }
+      .right-col > * { flex: 1 1 280px; }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+
+      .topbar { left: 0; padding: 0 16px; }
+      .hamburger { display: flex; }
+      .topbar-logo { display: flex; }
+      .topbar-title { display: none; }
+
+      .main { margin-left: 0; padding: 20px 16px 40px; }
+
+      .stats-row { grid-template-columns: 1fr 1fr; }
+
+      .right-col { flex-direction: column; }
+    }
+
+    @media (max-width: 480px) {
+      .stats-row { grid-template-columns: 1fr; }
+      .qa-grid { grid-template-columns: 1fr 1fr; }
+      .welcome h1 { font-size: 1.35rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Mobile overlay -->
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<!-- ──────────── SIDEBAR ──────────── -->
+<aside class="sidebar" id="sidebar">
+
+  <a class="sidebar-logo" href="#">
+    <div class="bb-mark"><span class="b1">B</span><span class="b2">B</span></div>
+    <div class="logo-sep"></div>
+    <div class="logo-text">
+      <div class="logo-name">Barros<br>&amp; Barros</div>
+      <div class="logo-sub">Contabilidade</div>
+    </div>
+  </a>
+
+  <nav class="sidebar-nav">
+    <div class="nav-label">Principal</div>
+
+    <a class="nav-item active" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+      Início
+    </a>
+
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 01-3.46 0"/>
+      </svg>
+      Comunicados
+      <span class="nav-badge">3</span>
+    </a>
+
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+      </svg>
+      Meus Chamados
+    </a>
+
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="16"/>
+        <line x1="8" y1="12" x2="16" y2="12"/>
+      </svg>
+      Abrir Chamado
+    </a>
+
+    <div class="nav-label" style="margin-top:6px;">Financeiro</div>
+
+    <a class="nav-item locked" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+        <line x1="1" y1="10" x2="23" y2="10"/>
+      </svg>
+      Boletos
+      <span class="nav-soon">Em breve</span>
+    </a>
+
+    <a class="nav-item locked" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/>
+        <polyline points="13 2 13 9 20 9"/>
+      </svg>
+      Documentos
+      <span class="nav-soon">Em breve</span>
+    </a>
+
+    <a class="nav-item locked" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <polyline points="12 6 12 12 16 14"/>
+      </svg>
+      Certidões
+      <span class="nav-soon">Em breve</span>
+    </a>
+
+    <div class="nav-label" style="margin-top:6px;">Ajuda</div>
+
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
+        <line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+      Suporte
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="s-user">
+      <div class="s-avatar">M</div>
+      <div class="s-info">
+        <div class="s-name">Maria Silva</div>
+        <div class="s-cnpj">12.345.678/0001-90</div>
+      </div>
+    </div>
+  </div>
+
+</aside>
+
+<!-- ──────────── TOPBAR ──────────── -->
+<header class="topbar">
+
+  <button class="hamburger" onclick="toggleSidebar()" aria-label="Abrir menu">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <line x1="3" y1="6"  x2="21" y2="6"/>
+      <line x1="3" y1="12" x2="21" y2="12"/>
+      <line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+
+  <a class="topbar-logo" href="#">
+    <div class="bb-mark"><span class="b1">B</span><span class="b2">B</span></div>
+    <div class="logo-sep"></div>
+    <div class="logo-text">
+      <div class="logo-name">Barros &amp; Barros</div>
+      <div class="logo-sub">Contabilidade</div>
+    </div>
+  </a>
+
+  <span class="topbar-title">Painel do Cliente</span>
+
+  <div class="topbar-right">
+    <button class="icon-btn" aria-label="Notificações">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 01-3.46 0"/>
+      </svg>
+      <span class="notif-dot"></span>
+    </button>
+
+    <button class="icon-btn" aria-label="Configurações">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+      </svg>
+    </button>
+
+    <div class="topbar-avatar" title="Meu perfil">M</div>
+  </div>
+
+</header>
+
+<!-- ──────────── MAIN CONTENT ──────────── -->
+<main class="main">
+
+  <!-- Welcome -->
+  <div class="welcome">
+    <h1>Olá, Maria — bem-vinda ao seu portal.</h1>
+    <p>Quinta-feira, 05 de junho de 2026</p>
+  </div>
+
+  <!-- Stats row -->
+  <div class="stats-row">
+    <div class="stat-card t-red">
+      <div class="sc-icon i-red">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <div class="sc-val">2</div>
+      <div class="sc-label">Chamados abertos</div>
+    </div>
+
+    <div class="stat-card t-gold">
+      <div class="sc-icon i-gold">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 01-3.46 0"/>
+        </svg>
+      </div>
+      <div class="sc-val">3</div>
+      <div class="sc-label">Comunicados não lidos</div>
+    </div>
+
+    <div class="stat-card t-green">
+      <div class="sc-icon i-green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+      <div class="sc-val">5</div>
+      <div class="sc-label">Chamados resolvidos este mês</div>
+    </div>
+  </div>
+
+  <!-- Content grid -->
+  <div class="content-grid">
+
+    <!-- Left: comunicados -->
+    <div>
+      <div class="sh">
+        <span class="sh-title">Comunicados Recentes</span>
+        <a href="#" class="sh-link">Ver todos →</a>
+      </div>
+      <div class="com-list">
+
+        <div class="com-card unread">
+          <div class="com-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+          </div>
+          <div class="com-body">
+            <div class="com-title">Declaração de IR 2026 — Prazo Final</div>
+            <div class="com-preview">O prazo para entrega da sua documentação para a declaração de Imposto de Renda 2026 é 30/06. Não deixe para a última hora — organize seus comprovantes com antecedência.</div>
+            <div class="com-footer">
+              <span class="com-date">03 jun 2026</span>
+              <span class="tag-new">Não lido</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="com-card unread">
+          <div class="com-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+          </div>
+          <div class="com-body">
+            <div class="com-title">Guia DASN-SIMEI — Junho 2026</div>
+            <div class="com-preview">A guia do DASN-SIMEI referente a junho de 2026 está disponível. Confira os valores e efetue o pagamento até o vencimento para evitar juros e multa.</div>
+            <div class="com-footer">
+              <span class="com-date">01 jun 2026</span>
+              <span class="tag-new">Não lido</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="com-card unread">
+          <div class="com-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8"  y1="2" x2="8"  y2="6"/>
+              <line x1="3"  y1="10" x2="21" y2="10"/>
+            </svg>
+          </div>
+          <div class="com-body">
+            <div class="com-title">Recesso de Corpus Christi</div>
+            <div class="com-preview">Nosso escritório estará fechado nos dias 19 e 20 de junho (Corpus Christi e ponto facultativo). Retornamos normalmente na segunda-feira, dia 23.</div>
+            <div class="com-footer">
+              <span class="com-date">28 mai 2026</span>
+              <span class="tag-new">Não lido</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="com-card">
+          <div class="com-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+          </div>
+          <div class="com-body">
+            <div class="com-title">Atualização no regime tributário</div>
+            <div class="com-preview">Informamos que houve atualização nas tabelas do Simples Nacional para o segundo semestre. Entre em contato caso tenha dúvidas sobre seu enquadramento.</div>
+            <div class="com-footer">
+              <span class="com-date">20 mai 2026</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Right column -->
+    <div class="right-col">
+
+      <!-- Quick actions -->
+      <div>
+        <div class="sh">
+          <span class="sh-title">Atalhos Rápidos</span>
+        </div>
+        <div class="qa-grid">
+
+          <a class="qa-card" href="#">
+            <div class="qa-icon i-navy">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="16"/>
+                <line x1="8" y1="12" x2="16" y2="12"/>
+              </svg>
+            </div>
+            <div class="qa-label">Abrir Chamado</div>
+            <div class="qa-desc">Nova solicitação</div>
+          </a>
+
+          <a class="qa-card" href="#">
+            <div class="qa-icon i-gold">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 01-3.46 0"/>
+              </svg>
+            </div>
+            <div class="qa-label">Comunicados</div>
+            <div class="qa-desc">3 não lidos</div>
+          </a>
+
+          <a class="qa-card disabled" href="#">
+            <div class="qa-icon" style="background:rgba(107,114,128,0.1);color:#9ca3af;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                <line x1="1" y1="10" x2="23" y2="10"/>
+              </svg>
+            </div>
+            <div class="qa-label">Boletos</div>
+            <div class="qa-desc soon">Em breve</div>
+          </a>
+
+          <a class="qa-card disabled" href="#">
+            <div class="qa-icon" style="background:rgba(107,114,128,0.1);color:#9ca3af;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/>
+                <polyline points="13 2 13 9 20 9"/>
+              </svg>
+            </div>
+            <div class="qa-label">Documentos</div>
+            <div class="qa-desc soon">Em breve</div>
+          </a>
+
+        </div>
+      </div>
+
+      <!-- Chamados mini list -->
+      <div>
+        <div class="sh">
+          <span class="sh-title">Meus Chamados</span>
+          <a href="#" class="sh-link">Ver todos →</a>
+        </div>
+        <div class="chamados-box">
+
+          <a class="ch-item" href="#">
+            <span class="ch-num">#0042</span>
+            <div class="ch-info">
+              <div class="ch-title">Dúvida sobre nota fiscal</div>
+              <div class="ch-date">Aberto em 04 jun 2026</div>
+            </div>
+            <span class="status s-progress">Em andamento</span>
+            <span class="ch-arrow">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </span>
+          </a>
+
+          <a class="ch-item" href="#">
+            <span class="ch-num">#0041</span>
+            <div class="ch-info">
+              <div class="ch-title">Solicitação de certidão</div>
+              <div class="ch-date">Aberto em 02 jun 2026</div>
+            </div>
+            <span class="status s-waiting">Aguardando</span>
+            <span class="ch-arrow">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </span>
+          </a>
+
+          <a class="ch-item" href="#">
+            <span class="ch-num">#0039</span>
+            <div class="ch-info">
+              <div class="ch-title">Cálculo ISS — maio</div>
+              <div class="ch-date">Fechado em 28 mai 2026</div>
+            </div>
+            <span class="status s-resolved">Resolvido</span>
+            <span class="ch-arrow">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </span>
+          </a>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+<script>
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('overlay');
+
+  function toggleSidebar() {
+    const open = sidebar.classList.toggle('open');
+    overlay.classList.toggle('on', open);
+  }
+
+  function closeSidebar() {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('on');
+  }
+
+  // Close sidebar on resize to desktop
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 768) closeSidebar();
+  });
+</script>
+</body>
+</html>

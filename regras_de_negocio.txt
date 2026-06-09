@@ -1,0 +1,359 @@
+================================================================================
+  BARROS & BARROS CONTABILIDADE — PORTAL DO CLIENTE
+  Regras de Negócio
+  Versão: 0.3
+  Atualizado em: 09/06/2026
+================================================================================
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. ATORES DO SISTEMA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1.1 CLIENTE
+  - Usuário externo, vinculado a uma empresa (CNPJ)
+  - Pode: acessar documentos, baixar arquivos, abrir chamados, receber comunicados,
+          baixar anexos enviados pelo colaborador em chamados finalizados
+  - Enxerga apenas os dados da própria empresa
+  - Não replica mensagens dentro do chamado (chamado é somente leitura para o cliente)
+  - [DUVIDA D1] Limite de usuários por empresa: 2 ou 3 pessoas?
+
+1.2 COLABORADOR (Operador / Escritório)
+  - Usuário interno do escritório
+  - Pode: ver chamados em aberto, pegar chamados para si, devolver chamados,
+          finalizar chamados, enviar anexos dentro de chamados,
+          criar comunicados para todos os clientes ou para empresa específica,
+          ver % de leitura de cada comunicado enviado
+  - Chamado bloqueado para outros ao ser pego (somente o responsável atual pode finalizar)
+  - Ao editar qualquer campo de um chamado: sistema registra "Editado por [nome]"
+  - Não gerencia usuários nem permissões
+
+1.3 ADMIN
+  - Herda todas as permissões do Colaborador
+  - Pode adicionalmente: cadastrar e remover usuários (clientes e colaboradores),
+    revogar permissões, abrir chamados internos (vinculados ao Monitor),
+    acessar relatórios e métricas do sistema
+  - Hierarquia: Admin > Colaborador > Cliente
+
+1.4 MONITOR
+  - Não é um usuário comum — é uma sessão/view dedicada
+  - Roda em dispositivo fixo na sala do escritório (TV ou monitor)
+  - Login fixo com conta de serviço (ex: monitor@barros.com)
+  - Sessão permanente, nunca expira
+  - Somente leitura
+  - Exibe: chamados abertos e em realização com prazo e colaborador responsável,
+           indicadores diários, mensais e anuais, prazos próximos do vencimento
+  - [DUVIDA D2] Haverá interação (ex: "assumir chamado") ou 100% passivo?
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. FLUXO DE CADASTRO E LOGIN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2.1 CADASTRO DE NOVO CLIENTE (MVP)
+  - Responsável: Admin do escritório (manual)
+  - Dados obrigatórios: CNPJ, razão social, nome do usuário, e-mail
+  - Sistema gera senha temporária automaticamente (expira em 72h)
+  - E-mail enviado com senha temporária + link de acesso
+  - Se prazo expirar: Admin gera nova senha temporária
+
+2.2 PRIMEIRO ACESSO DO CLIENTE
+  - Login com CNPJ + senha temporária
+  - Sistema bloqueia e exige troca de senha antes de liberar acesso
+  - Após definir nova senha: acesso liberado
+
+2.3 ACESSO NORMAL
+  - Login com CNPJ + senha pessoal
+  - [DUVIDA D5] 2FA no MVP ou expansão?
+
+2.4 RECUPERAÇÃO DE SENHA
+  - "Esqueci minha senha" → link de redefinição por e-mail (expira em 1h)
+  - Após redefinição: sessões anteriores encerradas
+
+2.5 BOTÃO "FAZER PARTE" (público)
+  - Redireciona para WhatsApp do escritório (não é auto-cadastro)
+  - Expansão futura: formulário com triagem automatizada
+
+2.6 IDENTIFICADOR DE LOGIN
+  - Cliente: CNPJ da empresa + senha
+  - Colaborador/Admin: CNPJ da empresa do escritório + senha
+  - Justificativa: cliente lembra o CNPJ; evita confusão com múltiplos usuários
+
+2.7 EXPANSÃO FUTURA — LOGIN
+  - Certificado digital via BirdID ou VaultID
+  - Integração gov.br (opcional)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. CHAMADOS — REGRAS COMPLETAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+3.1 TIPOS DE CHAMADO
+  - Cálculo de Rescisão: informa o nome do funcionário
+  - Solicitação de Certidão: escolhe tipo A, B ou C
+  - Envio de Notas Fiscais
+  - [Expansão] Outros tipos conforme demanda
+
+3.2 FLUXO DE STATUS
+
+  STATUS INTERNO   | CLIENTE VÊ          | COLABORADOR VÊ
+  ─────────────────|─────────────────────|──────────────────────────────────
+  pendente         | Pendente            | Em Aberto
+  em_realizacao    | Em Atendimento      | Realizando (nome do colaborador)
+  devolvido        | Pendente            | Em Aberto ⚠ "Devolvido por [nome]"
+  finalizado       | Finalizado          | Finalizado
+
+3.3 REGRAS DE ATRIBUIÇÃO
+  - Qualquer colaborador pode pegar um chamado "Em Aberto"
+  - Ao pegar: chamado fica bloqueado para os outros (botão "Pegar" desaparece)
+  - Somente o responsável atual pode finalizar ou devolver o chamado
+  - Ao devolver: status volta para "Em Aberto" com chip "Devolvido por [nome]"
+    para rastreio e controle; cliente vê "Pendente" normalmente
+  - Admin pode sempre intervir em qualquer chamado
+
+3.4 PRAZOS POR TIPO (dias úteis a partir da abertura)
+  - Cálculo de Rescisão : 1 dia útil
+  - Solicitação de Certidão: 1 dia útil
+  - Envio de Notas Fiscais : 3 dias úteis
+
+  Regra de início da contagem:
+  - Horário comercial: seg–sex, 08:00–18:00
+  - Se chamado aberto dentro do horário: conta a partir do horário de criação
+  - Se aberto fora do horário ou fim de semana: conta a partir das 08:00
+    do próximo dia útil
+  - [DUVIDA D9] Feriados nacionais entram no cálculo? Por ora: não considerados
+
+  Visual no painel do colaborador:
+  - Verde  : > 50% do tempo restante
+  - Amarelo: < 25% do tempo restante
+  - Vermelho: prazo vencido
+
+3.5 FINALIZAÇÃO
+  - Ao clicar em "Finalizar": modal de confirmação "Chamado #XXXX finalizado?"
+    com botões [Cancelar] e [Confirmar] — para evitar clique acidental
+  - Ao confirmar: status → finalizado, responsável gravado com nome permanente
+  - Sistema gera comunicado automático para o cliente:
+    "Seu chamado [número] foi finalizado. Acesse para baixar os documentos."
+  - Comunicado automático aparece no badge de notificações do cliente
+
+3.6 EDIÇÃO DE CHAMADO
+  - Colaborador pode editar campos de um chamado
+  - Ao salvar: sistema registra "Editado por [nome do colaborador da sessão]"
+    com data/hora da edição — visível no histórico do chamado
+  - O nome vem da sessão ativa (não pode ser alterado manualmente)
+
+3.7 AUDIT TRAIL (histórico de ações)
+  Cada chamado registra linha do tempo com:
+  - "Chamado aberto por [cliente]" — data/hora
+  - "Pego por [colaborador]" — data/hora
+  - "Devolvido por [colaborador]" — data/hora + motivo opcional
+  - "Arquivo enviado por [colaborador]: [nome_arquivo]" — data/hora
+  - "Editado por [colaborador]" — campo alterado + data/hora
+  - "Finalizado por [colaborador]" — data/hora
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. ANEXOS POR CHAMADO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+4.1 ENVIO (pelo colaborador)
+  - Upload dentro do detalhe do chamado
+  - Tamanho máximo por arquivo: 10 MB
+  - Múltiplos arquivos permitidos por chamado
+  - Tipos permitidos: PDF, DOCX, XLSX, PNG, JPG, ZIP
+  - Armazenamento: servidor local (MVP); migrar para S3 na expansão
+
+4.2 DOWNLOAD (pelo cliente)
+  - Disponível na página de detalhe do chamado, após status "finalizado"
+  - Download passa por rota autenticada: cliente só acessa arquivos
+    vinculados ao próprio CNPJ
+  - URL do arquivo nunca é exposta diretamente; sempre servida via Flask
+
+4.3 SEGURANÇA
+  - Nome do arquivo sanitizado no servidor (não usar nome original para salvar)
+  - Path de armazenamento fora da pasta pública (não acessível via URL direta)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5. COMUNICADOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+5.1 CRIAÇÃO (pelo colaborador ou admin)
+  - Aba "Criar Comunicado" na área do colaborador
+  - Campos: destinatário, título, mensagem (texto), anexo PDF (opcional)
+  - Destinatário:
+      -> "Todos os clientes" (para_todos = True)
+      -> "Empresa específica" → dropdown com lista de empresas ativas
+
+5.2 VISIBILIDADE NO CLIENTE
+  - Query filtra: para_todos = True  OU  empresa_id = empresa_do_cliente
+  - Comunicados de outra empresa nunca aparecem para clientes diferentes
+
+5.3 COMUNICADOS AUTOMÁTICOS (gerados pelo sistema)
+  - Ao finalizar chamado: sistema cria comunicado para a empresa do chamado
+    com texto padrão e link para os documentos
+  - Identificados internamente como tipo "sistema" (não editável pelo colab)
+
+5.4 LEITURA E RASTREIO (visível ao colaborador)
+  - Painel de comunicados enviados mostra:
+    "X de Y empresas leram" ou "X de Y usuários leram"
+  - Drill-down: quais empresas/usuários ainda não leram
+  - Base: tabela ComunicadoLeitura (já existente no modelo)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+6. ÁREA DO COLABORADOR — ESTRUTURA DE PÁGINAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+6.1 KANBAN DE CHAMADOS (página principal)
+  Três colunas:
+  [Em Aberto]      → chamados pendentes ou devolvidos, sem responsável
+                     Ação: [Pegar chamado]
+  [Realizando]     → chamados em_realizacao; mostra nome do colaborador + prazo
+                     Ação: [Finalizar] (com modal) | [Devolver]
+  [Finalizado]     → histórico com filtros por empresa, tipo, colaborador, período
+
+  Indicadores de prazo visíveis em cada card (verde / amarelo / vermelho)
+
+6.2 DETALHE DO CHAMADO
+  - Informações gerais: tipo, empresa, solicitante, data de abertura, prazo
+  - Histórico de ações (audit trail cronológico)
+  - Upload de arquivos (seção visível somente para colaborador)
+  - Lista de arquivos enviados com opção de remover (antes da finalização)
+  - Quem está responsável atualmente
+
+6.3 CRIAR COMUNICADO
+  - Formulário: destinatário, título, mensagem, PDF opcional
+  - Lista de comunicados enviados com % de leitura
+  - Filtro por data e destinatário
+
+6.4 FILTROS NA COLUNA FINALIZADO
+  - Por empresa (dropdown)
+  - Por tipo de chamado
+  - Por colaborador que finalizou
+  - Por período (data inicial / data final)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+7. ÁREA DO CLIENTE — AJUSTES PARA FASE 2
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+7.1 MEUS CHAMADOS — DETALHE
+  - Ao clicar em chamado finalizado: abre página de detalhe
+  - Mostra: informações do chamado, colaborador que atendeu, data de finalização
+  - Lista de documentos disponíveis para download (enviados pelo colaborador)
+  - Download autenticado: rota verifica se empresa_id do arquivo = empresa do cliente
+
+7.2 NOTIFICAÇÕES
+  - Badge no ícone de notificações conta: comunicados não lidos + chamados finalizados
+    com documentos disponíveis ainda não vistos
+  - Comunicados automáticos de finalização aparecem no feed de comunicados
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+8. MODELOS DE DADOS — ADIÇÕES PREVISTAS (área_colab)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Chamado — campos novos:
+  - status: 'pendente' | 'em_realizacao' | 'devolvido' | 'finalizado'
+  - atribuido_em         DateTime   — quando colaborador pegou
+  - prazo_limite         DateTime   — calculado na criação
+  - devolvido_por_nome   String     — último colaborador que devolveu
+  - editado_por_nome     String     — último colaborador que editou
+  - editado_em           DateTime
+
+Novo modelo AnexoChamado:
+  - id, chamado_id, nome_original, caminho_arquivo
+  - tamanho_bytes (máx 10.485.760 = 10 MB)
+  - enviado_por_id (FK Usuario), enviado_em
+
+Novo modelo HistoricoChamado:
+  - id, chamado_id, usuario_id, usuario_nome (cópia imutável)
+  - acao: 'aberto' | 'pego' | 'devolvido' | 'finalizado' | 'anexo_enviado' | 'editado'
+  - detalhe (texto livre), criado_em
+
+Comunicado — campo novo:
+  - empresa_id (FK Empresa, nullable) — null = para_todos
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+9. ROADMAP POR FASE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FASE 1 — MVP área_cliente (CONCLUÍDO)
+  [x] Autenticação: login CNPJ+senha, senha temporária, troca obrigatória
+  [x] Comunicados: cliente lê e marca como lido
+  [x] Chamados: cliente abre (rescisão, certidão, notas fiscais)
+  [x] Meus Chamados: lista com badges de status
+  [x] Área Admin stub: lista e atualiza status de chamados
+  [x] Área Colab stub: lista e atualiza status de chamados
+
+FASE 2 — Área do Colaborador completa (PRÓXIMA)
+  [ ] Kanban 3 colunas: Em Aberto / Realizando / Finalizado
+  [ ] Pegar chamado (com bloqueio) e Devolver (com registro)
+  [ ] Modal de confirmação de finalização
+  [ ] Audit trail por chamado
+  [ ] Prazo por tipo com semáforo visual
+  [ ] Upload de anexos (10 MB máx) e download autenticado pelo cliente
+  [ ] Notificação automática ao cliente na finalização
+  [ ] Criar comunicado (todos ou empresa específica)
+  [ ] Painel de leitura de comunicados (% por empresa)
+  [ ] Filtros na coluna Finalizado
+  [ ] "Editado por [nome]" em qualquer edição
+  [ ] Detalhe do chamado na área_cliente (documentos para download)
+
+FASE 3 — Documentos financeiros
+  [ ] Boletos e recibos
+  [ ] Folha de pagamento (PDF via COPAN)
+  [ ] Impostos (PDF)
+  [ ] Extrato de pagamentos
+
+FASE 4 — Integrações fiscais
+  [ ] NF-e e NFC-e (via SIEG ou Domínio)
+  [ ] Certidões (via Receita Federal ou SIEG)
+  [ ] Evolução do faturamento (via Domínio)
+
+FASE 5 — Comunicação em escala
+  [ ] Envio em lote por WhatsApp e e-mail
+  [ ] Abertura de chamado via WhatsApp com triagem por IA
+  [ ] Login com certificado digital (BirdID/VaultID)
+  [ ] Monitor: dashboard dedicado para TV do escritório
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+10. INTEGRAÇÕES PREVISTAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  - Domínio (Thomson Reuters): boletos, recibos, faturamento, NF-e
+  - SIEG: NF-e, NFC-e, certidões
+  - Receita Federal: certidões, impostos
+  - COPAN: folha de pagamento
+  - Banco(s): boletos, baixa de boleto, PIX
+  - WhatsApp Business API: comunicados em lote, chamados futuros
+  - BirdID / VaultID: login por certificado digital
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+11. DUVIDAS EM ABERTO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  D1. Limite de usuários por empresa cliente: 2 ou 3?
+  D2. Monitor terá interação (ex: "assumir chamado") ou será 100% passivo?
+  D5. Implementar 2FA no MVP ou deixar para expansão?
+  D6. Documentos financeiros (boletos etc): armazenados no sistema ou buscados
+      na API externa no momento da consulta?
+  D7. Quanto tempo de histórico de documentos fica disponível?
+  D8. Quem pode incluir boleto manualmente? Só Admin ou também Colaborador?
+  D9. Feriados nacionais entram no cálculo de prazo de chamados?
+
+  [RESOLVIDAS]
+  D3. SLA por tipo de chamado? SIM — Rescisão 1d, Certidão 1d, Notas 3d
+  D4. Categorias de chamado: Rescisão | Certidão A/B/C | Notas Fiscais
+
+
+================================================================================
+  Histórico de versões
+  v0.1 — 05/06/2026 — Documento inicial
+  v0.2 — 09/06/2026 — Área do cliente implementada (Fase 1 concluída)
+  v0.3 — 09/06/2026 — Regras da área do colaborador definidas (Fase 2 planejada)
+================================================================================

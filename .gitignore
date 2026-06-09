@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+pip-wheel-metadata/
+
+# Virtual environments
+venv/
+env/
+.env/
+.venv/
+
+# Flask / instance
+backend/instance/
+backend/uploads/
+
+# Environment variables
+.env
+*.env
+
+# Database
+*.db
+*.sqlite3
+
+# Cookies / sessões de teste
+backend/cookies.txt
+cookies.txt
+
+# Claude Code local settings
+.claude/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
