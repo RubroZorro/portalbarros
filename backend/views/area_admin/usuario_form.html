@@ -1,0 +1,95 @@
+{% extends 'area_admin/layout.html' %}
+{% block title %}{% if usuario %}Editar Usuário{% else %}Novo Usuário{% endif %}{% endblock %}
+{% block topbar_title %}{% if usuario %}Editar Usuário{% else %}Novo Usuário{% endif %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{% if usuario %}Editar Usuário{% else %}Novo Usuário{% endif %}</h1>
+    <p>{% if usuario %}Atualize os dados do usuário.{% else %}Um e-mail com senha temporária deve ser enviado ao usuário após o cadastro.{% endif %}</p>
+  </div>
+</div>
+
+<div class="form-card">
+  <form method="POST" id="user-form">
+    <div class="form-row">
+      <div class="field-group">
+        <label class="field-label">Nome completo <span class="req">*</span></label>
+        <input type="text" name="nome" class="form-control"
+               value="{{ usuario.nome if usuario else '' }}"
+               placeholder="Nome do usuário" required>
+      </div>
+      <div class="field-group">
+        <label class="field-label">E-mail <span class="req">*</span></label>
+        <input type="email" name="email" class="form-control"
+               value="{{ usuario.email if usuario else '' }}"
+               placeholder="email@exemplo.com" required>
+      </div>
+    </div>
+
+    <div class="field-group" id="cpf-field">
+      <label class="field-label">CPF <span class="req" id="cpf-req" style="display:none;">*</span></label>
+      <input type="text" name="cpf" id="cpf-input" class="form-control"
+             value="{{ usuario.cpf if usuario and usuario.cpf else '' }}"
+             placeholder="000.000.000-00" maxlength="14">
+      <p style="font-size:0.75rem;color:var(--muted);margin-top:6px;" id="cpf-hint">
+        Obrigatório para operadores e administradores — usado como login individual.
+      </p>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Perfil <span class="req">*</span></label>
+      <select name="role" id="role-select" class="form-control" onchange="toggleEmpresaField(this.value)" required>
+        <option value="">Selecione...</option>
+        <option value="cliente"  {% if usuario and usuario.role == 'cliente'  %}selected{% endif %}>Cliente</option>
+        <option value="operador" {% if usuario and usuario.role == 'operador' %}selected{% endif %}>Operador</option>
+        <option value="admin"    {% if usuario and usuario.role == 'admin'    %}selected{% endif %}>Administrador</option>
+      </select>
+    </div>
+
+    <div class="field-group" id="empresa-field"
+         style="{% if not usuario or usuario.role != 'cliente' %}display:none;{% endif %}">
+      <label class="field-label">Empresa <span class="req">*</span></label>
+      <select name="empresa_id" class="form-control">
+        <option value="">Selecione a empresa...</option>
+        {% for emp in empresas %}
+        <option value="{{ emp.id }}"
+          {% if usuario and usuario.role == 'cliente' and usuario.empresa_id == emp.id %}selected{% endif %}>
+          {{ emp.razao_social }}
+        </option>
+        {% endfor %}
+      </select>
+      <p style="font-size:0.75rem;color:var(--muted);margin-top:6px;">
+        Operadores e administradores são vinculados ao escritório automaticamente.
+      </p>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">
+        {% if usuario %}Salvar Alterações{% else %}Criar Usuário{% endif %}
+      </button>
+      <a href="{{ url_for('area_admin.usuarios') }}" class="btn btn-ghost">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function toggleFields(role) {
+    document.getElementById('empresa-field').style.display = (role === 'cliente') ? '' : 'none';
+    const cpfReq = document.getElementById('cpf-req');
+    const cpfInput = document.getElementById('cpf-input');
+    if (role === 'operador' || role === 'admin') {
+      cpfReq.style.display = '';
+      cpfInput.required = true;
+    } else {
+      cpfReq.style.display = 'none';
+      cpfInput.required = false;
+    }
+  }
+  const sel = document.getElementById('role-select');
+  if (sel.value) toggleFields(sel.value);
+  sel.addEventListener('change', () => toggleFields(sel.value));
+</script>
+{% endblock %}

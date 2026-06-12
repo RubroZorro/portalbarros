@@ -319,3 +319,81 @@ def atualizar_status(id):
         chamado.status = novo
         db.session.commit()
     return redirect(url_for('area_colab.dashboard'))
+
+
+# ── CHAMADO INTERNO ──────────────────────────────────────────────────────────
+
+@colab_bp.route('/chamados/interno', methods=['GET', 'POST'])
+@colab_required
+def criar_chamado_interno():
+    empresas = _empresas_clientes()
+
+    if request.method == 'POST':
+        tipo = request.form.get('tipo', '').strip()
+        descricao = request.form.get('descricao', '').strip() or None
+        empresa_id_val = request.form.get('empresa_id', type=int)
+        data_limite_str = request.form.get('data_limite', '').strip()
+        nome_funcionario = None
+        tipo_certidao = None
+
+        if not empresa_id_val:
+            flash('Selecione a empresa que solicitou.', 'erro')
+            return render_template('area_colab/criar_chamado_interno.html',
+                                   active='criar_chamado_interno', empresas=empresas)
+
+        if not data_limite_str:
+            flash('Informe a data limite.', 'erro')
+            return render_template('area_colab/criar_chamado_interno.html',
+                                   active='criar_chamado_interno', empresas=empresas)
+
+        try:
+            prazo = datetime.strptime(data_limite_str, '%Y-%m-%d').replace(hour=17, minute=59)
+        except ValueError:
+            flash('Data limite inválida.', 'erro')
+            return render_template('area_colab/criar_chamado_interno.html',
+                                   active='criar_chamado_interno', empresas=empresas)
+
+        if tipo == 'rescisao':
+            nome_funcionario = request.form.get('nome_funcionario', '').strip()
+            if not nome_funcionario:
+                flash('Informe o nome do funcionário.', 'erro')
+                return render_template('area_colab/criar_chamado_interno.html',
+                                       active='criar_chamado_interno', empresas=empresas)
+            titulo = f'Cálculo de Rescisão — {nome_funcionario}'
+        elif tipo == 'certidao':
+            tipo_certidao = request.form.get('tipo_certidao', '').strip().upper()
+            if tipo_certidao not in ('A', 'B', 'C'):
+                flash('Selecione o tipo de certidão.', 'erro')
+                return render_template('area_colab/criar_chamado_interno.html',
+                                       active='criar_chamado_interno', empresas=empresas)
+            titulo = f'Solicitação de Certidão {tipo_certidao}'
+        elif tipo == 'notas_fiscais':
+            titulo = 'Envio de Notas Fiscais'
+        else:
+            flash('Selecione o tipo de solicitação.', 'erro')
+            return render_template('area_colab/criar_chamado_interno.html',
+                                   active='criar_chamado_interno', empresas=empresas)
+
+        chamado = Chamado(
+            numero='TEMP',
+            tipo=tipo,
+            titulo=titulo,
+            descricao=descricao,
+            nome_funcionario=nome_funcionario,
+            tipo_certidao=tipo_certidao,
+            status='pendente',
+            prazo_limite=prazo,
+            empresa_id=empresa_id_val,
+            usuario_id=current_user.id,
+        )
+        db.session.add(chamado)
+        db.session.flush()
+        chamado.numero = f'#{chamado.id:04d}'
+        reg_historico(chamado.id, current_user, 'aberto')
+        db.session.commit()
+
+        flash(f'Chamado interno {chamado.numero} criado com sucesso.', 'sucesso')
+        return redirect(url_for('area_colab.dashboard'))
+
+    return render_template('area_colab/criar_chamado_interno.html',
+                           active='criar_chamado_interno', empresas=empresas)

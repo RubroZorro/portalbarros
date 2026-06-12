@@ -12,6 +12,7 @@ class Usuario(UserMixin, db.Model):
     email = db.Column(db.String(150), unique=True, nullable=False)
     senha_hash = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(20), nullable=False, default='cliente')  # cliente | operador | admin
+    cpf = db.Column(db.String(20), unique=True, nullable=True)
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=True)
     ativo = db.Column(db.Boolean, default=True)
     senha_temporaria = db.Column(db.Boolean, default=True)

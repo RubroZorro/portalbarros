@@ -1,0 +1,164 @@
+{% extends 'area_colab/layout.html' %}
+{% block title %}Criar Chamado Interno{% endblock %}
+{% block topbar_title %}Criar Chamado Interno{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Criar Chamado Interno</h1>
+    <p>Registre uma solicitação recebida por fora do sistema — telefone, e-mail ou presencial.</p>
+  </div>
+</div>
+
+<form method="POST" action="{{ url_for('area_colab.criar_chamado_interno') }}" id="form-interno">
+  <div class="form-card">
+
+    <!-- Aberto por: colaborador logado (salvo automaticamente) -->
+    <div class="aberto-por">
+      <div class="ap-avatar">{{ current_user.inicial }}</div>
+      <div>
+        <div class="ap-label">Aberto por</div>
+        <div class="ap-nome">{{ current_user.nome }} · Colaborador</div>
+      </div>
+      <span class="ap-tag">CHAMADO INTERNO</span>
+    </div>
+
+    <!-- Tipo de Solicitação -->
+    <div class="sh"><span class="sh-title">Tipo de Solicitação</span></div>
+    <div class="tipo-grid">
+
+      <label class="tipo-label">
+        <input type="radio" name="tipo" value="rescisao" required>
+        <div class="tipo-inner">
+          <div class="tipo-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/>
+              <line x1="20" y1="4" x2="8.12" y2="15.88"/>
+              <line x1="14.47" y1="14.48" x2="20" y2="20"/>
+              <line x1="8.12" y1="8.12" x2="12" y2="12"/>
+            </svg>
+          </div>
+          <strong>Cálculo de Rescisão</strong>
+          <span>Verbas rescisórias de um funcionário</span>
+        </div>
+      </label>
+
+      <label class="tipo-label">
+        <input type="radio" name="tipo" value="certidao" required>
+        <div class="tipo-inner">
+          <div class="tipo-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <polyline points="9 15 11 17 15 13"/>
+            </svg>
+          </div>
+          <strong>Pedir Certidão</strong>
+          <span>Certidões A, B ou C</span>
+        </div>
+      </label>
+
+      <label class="tipo-label">
+        <input type="radio" name="tipo" value="notas_fiscais" required>
+        <div class="tipo-inner">
+          <div class="tipo-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <line x1="10" y1="9" x2="8" y2="9"/>
+            </svg>
+          </div>
+          <strong>Notas Fiscais</strong>
+          <span>Envio das notas emitidas</span>
+        </div>
+      </label>
+
+    </div>
+
+    <!-- Campo extra: rescisão -->
+    <div id="campo-rescisao" class="extra-field" style="display:none;">
+      <label class="field-label" for="nome_funcionario">Nome do Funcionário <span class="req">*</span></label>
+      <input type="text" id="nome_funcionario" name="nome_funcionario" class="form-control"
+             placeholder="Nome completo do funcionário">
+    </div>
+
+    <!-- Campo extra: certidão -->
+    <div id="campo-certidao" class="extra-field" style="display:none;">
+      <label class="field-label">Tipo de Certidão <span class="req">*</span></label>
+      <div class="cert-opts">
+        <label class="cert-opt">
+          <input type="radio" name="tipo_certidao" value="A">
+          <div class="cert-opt-inner">Certidão A</div>
+        </label>
+        <label class="cert-opt">
+          <input type="radio" name="tipo_certidao" value="B">
+          <div class="cert-opt-inner">Certidão B</div>
+        </label>
+        <label class="cert-opt">
+          <input type="radio" name="tipo_certidao" value="C">
+          <div class="cert-opt-inner">Certidão C</div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Empresa que solicitou -->
+    <div class="extra-field">
+      <label class="field-label" for="empresa_id">Empresa que solicitou <span class="req">*</span></label>
+      <select id="empresa_id" name="empresa_id" class="form-control" required>
+        <option value="">Selecione a empresa…</option>
+        {% for emp in empresas %}
+          <option value="{{ emp.id }}">{{ emp.razao_social }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Data limite (diferencial do chamado interno) -->
+    <div class="extra-field">
+      <label class="field-label" for="data_limite">Data limite <span class="req">*</span></label>
+      <input type="date" id="data_limite" name="data_limite" class="form-control" required>
+      <p class="field-hint">Prazo combinado para concluir a solicitação — usado pelo semáforo do Kanban.</p>
+    </div>
+
+    <!-- Descrição adicional -->
+    <div class="extra-field" style="margin-bottom:24px;">
+      <label class="field-label" for="descricao">Descrição adicional <span style="color:var(--muted);font-weight:400;">(opcional)</span></label>
+      <textarea id="descricao" name="descricao" class="form-control"
+                placeholder="Detalhes da solicitação, quem pediu, período de referência…"></textarea>
+    </div>
+
+    <button type="submit" class="btn-submit">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      Registrar chamado interno
+    </button>
+
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const radios = document.querySelectorAll('input[name="tipo"]');
+  const campoRescisao = document.getElementById('campo-rescisao');
+  const campoCertidao = document.getElementById('campo-certidao');
+  const nomeFuncionario = document.getElementById('nome_funcionario');
+
+  radios.forEach(radio => {
+    radio.addEventListener('change', function () {
+      campoRescisao.style.display = 'none';
+      campoCertidao.style.display = 'none';
+      nomeFuncionario.required = false;
+
+      if (this.value === 'rescisao') {
+        campoRescisao.style.display = 'block';
+        nomeFuncionario.required = true;
+      } else if (this.value === 'certidao') {
+        campoCertidao.style.display = 'block';
+      }
+    });
+  });
+</script>
+{% endblock %}

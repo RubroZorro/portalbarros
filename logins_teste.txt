@@ -31,11 +31,11 @@
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   ÁREA DO COLABORADOR
   Acesso: http://localhost:5000/auth/login → redireciona para /colab/dashboard
-  Login:  CNPJ do escritório + Senha individual
+  Login:  CPF individual + Senha
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   João Operador
-  ├── CNPJ:  00.000.000/0001-00
+  ├── CPF:   222.222.222-22
   ├── Senha: Oper@123
   ├── Role:  operador
   └── Email: joao@barros.com
@@ -43,12 +43,12 @@
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   ÁREA DO ADMIN
-  Acesso: http://localhost:5000/auth/login → redireciona para /colab/dashboard
-  Login:  CNPJ do escritório + Senha individual
+  Acesso: http://localhost:5000/auth/login → redireciona para /admin/dashboard
+  Login:  CPF individual + Senha
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   Admin Barros
-  ├── CNPJ:  00.000.000/0001-00
+  ├── CPF:   111.111.111-11
   ├── Senha: Admin@123
   ├── Role:  admin
   └── Email: admin@barros.com

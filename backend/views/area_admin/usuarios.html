@@ -1,0 +1,93 @@
+{% extends 'area_admin/layout.html' %}
+{% block title %}Usuários{% endblock %}
+{% block topbar_title %}Usuários{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Usuários</h1>
+    <p>{{ usuarios|length }} usuário(s) listado(s)</p>
+  </div>
+  <a href="{{ url_for('area_admin.usuario_novo') }}" class="btn btn-primary">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+    Novo Usuário
+  </a>
+</div>
+
+<!-- Filtro por empresa -->
+<form method="GET" style="display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap;">
+  <select name="empresa_id" class="form-control" style="max-width:280px;">
+    <option value="">Todas as empresas</option>
+    {% for emp in empresas %}
+    <option value="{{ emp.id }}" {% if empresa_filtro == emp.id %}selected{% endif %}>{{ emp.razao_social }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn btn-ghost">Filtrar</button>
+  {% if empresa_filtro %}
+  <a href="{{ url_for('area_admin.usuarios') }}" class="btn btn-ghost">Limpar</a>
+  {% endif %}
+</form>
+
+<div class="sec-card">
+  <div style="overflow-x:auto;">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>E-mail</th>
+          <th>Empresa</th>
+          <th style="text-align:center;">Perfil</th>
+          <th style="text-align:center;">Status</th>
+          <th style="text-align:right;">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in usuarios %}
+        <tr>
+          <td style="font-weight:500;">
+            {{ u.nome }}
+            {% if u.senha_temporaria %}
+              <span class="badge b-pendente" style="margin-left:5px;font-size:0.6rem;">senha temp.</span>
+            {% endif %}
+          </td>
+          <td style="color:var(--muted);font-size:0.8rem;">{{ u.email }}</td>
+          <td style="font-size:0.8rem;">{{ u.empresa.razao_social if u.empresa else '—' }}</td>
+          <td style="text-align:center;">
+            <span class="badge b-{{ u.role }}">
+              {% if u.role == 'admin' %}Admin{% elif u.role == 'operador' %}Operador{% else %}Cliente{% endif %}
+            </span>
+          </td>
+          <td style="text-align:center;">
+            <span class="badge {% if u.ativo %}b-ativo{% else %}b-inativo{% endif %}">
+              {% if u.ativo %}Ativo{% else %}Inativo{% endif %}
+            </span>
+          </td>
+          <td style="text-align:right;">
+            <div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;">
+              <a href="{{ url_for('area_admin.usuario_editar', id=u.id) }}" class="btn btn-ghost btn-sm">Editar</a>
+              <form method="POST" action="{{ url_for('area_admin.usuario_reset_senha', id=u.id) }}" style="display:inline;">
+                <button type="submit" class="btn btn-ghost btn-sm"
+                        onclick="return confirm('Redefinir senha de {{ u.nome }}?')">
+                  Reset senha
+                </button>
+              </form>
+              {% if u.id != current_user.id %}
+              <form method="POST" action="{{ url_for('area_admin.usuario_toggle', id=u.id) }}" style="display:inline;">
+                <button type="submit" class="btn btn-sm {% if u.ativo %}btn-danger{% else %}btn-ghost{% endif %}">
+                  {% if u.ativo %}Desativar{% else %}Ativar{% endif %}
+                </button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:32px;">Nenhum usuário encontrado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

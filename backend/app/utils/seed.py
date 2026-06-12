@@ -19,10 +19,12 @@ def seed_database():
     cliente.set_password('Teste@123')
 
     admin = Usuario(nome='Admin Barros', email='admin@barros.com', role='admin',
+                    cpf='111.111.111-11',
                     empresa_id=empresa_escritorio.id, senha_temporaria=False)
     admin.set_password('Admin@123')
 
     operador = Usuario(nome='João Operador', email='joao@barros.com', role='operador',
+                       cpf='222.222.222-22',
                        empresa_id=empresa_escritorio.id, senha_temporaria=False)
     operador.set_password('Oper@123')
 

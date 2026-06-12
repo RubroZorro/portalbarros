@@ -9,7 +9,7 @@
     <p>Acompanhe a leitura dos comunicados por empresa.</p>
   </div>
   <a href="{{ url_for('area_colab.criar_comunicado') }}"
-     style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:var(--navy);color:#fff;border-radius:8px;text-decoration:none;font-size:0.84rem;font-weight:600;white-space:nowrap;">
+     style="display:inline-flex;align-items:center;gap:8px;padding:11px 20px;background:var(--navy);color:#fff;border-radius:10px;text-decoration:none;font-size:0.84rem;font-weight:600;white-space:nowrap;">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
       <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
     </svg>
@@ -37,14 +37,14 @@
       <div style="font-size:0.84rem;font-weight:600;color:var(--text);margin-bottom:2px;">
         {{ c.titulo|truncate(60, True, '…') }}
       </div>
-      <div style="font-size:0.72rem;color:var(--muted);">
+      <div style="font-size:0.72rem;color:var(--soft);">
         {{ c.conteudo|truncate(80, True, '…') }}
       </div>
     </div>
 
     <div style="font-size:0.78rem;color:var(--muted);">
       {% if c.empresa_id is none %}
-        <span style="font-weight:500;color:var(--navy);">Todos</span>
+        <span style="font-weight:600;color:var(--navy);">Todos</span>
       {% elif c.empresa_destino %}
         {{ c.empresa_destino.razao_social|truncate(25, True, '…') }}
       {% else %}
@@ -58,16 +58,16 @@
       <div style="font-size:0.78rem;color:var(--text);font-weight:500;">
         {{ s.leram }} de {{ s.total }}
         {% if s.total > 0 %}
-          <span style="color:var(--muted);font-weight:400;">({{ pct }}%)</span>
+          <span style="color:var(--soft);font-weight:400;">({{ pct }}%)</span>
         {% endif %}
       </div>
-      <div class="com-stat-bar" style="margin-top:4px;width:90px;">
+      <div class="com-stat-bar" style="margin-top:5px;width:100px;">
         <div class="com-stat-fill" style="width:{{ pct }}%;"></div>
       </div>
     </div>
 
     <div style="text-align:right;">
-      <span style="font-size:0.68rem;color:var(--muted);">#{{ c.id }}</span>
+      <span style="font-size:0.68rem;color:var(--soft);">#{{ c.id }}</span>
     </div>
 
   </div>
@@ -80,7 +80,7 @@
     </svg>
     <p style="font-size:0.875rem;margin-bottom:14px;">Nenhum comunicado enviado ainda.</p>
     <a href="{{ url_for('area_colab.criar_comunicado') }}"
-       style="display:inline-block;padding:9px 20px;background:var(--navy);color:#fff;border-radius:8px;text-decoration:none;font-size:0.82rem;font-weight:600;">
+       style="display:inline-block;padding:10px 20px;background:var(--navy);color:#fff;border-radius:10px;text-decoration:none;font-size:0.82rem;font-weight:600;">
       Criar primeiro comunicado
     </a>
   </div>

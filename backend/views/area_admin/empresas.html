@@ -1,0 +1,62 @@
+{% extends 'area_admin/layout.html' %}
+{% block title %}Empresas{% endblock %}
+{% block topbar_title %}Empresas{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Empresas</h1>
+    <p>{{ empresas|length }} empresa(s) cadastrada(s)</p>
+  </div>
+  <a href="{{ url_for('area_admin.empresa_nova') }}" class="btn btn-primary">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+    Nova Empresa
+  </a>
+</div>
+
+<div class="sec-card">
+  <div style="overflow-x:auto;">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Razão Social</th>
+          <th>CNPJ</th>
+          <th style="text-align:center;">Usuários</th>
+          <th style="text-align:center;">Chamados</th>
+          <th style="text-align:center;">Status</th>
+          <th style="text-align:right;">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for emp in empresas %}
+        <tr>
+          <td style="font-weight:500;">{{ emp.razao_social }}</td>
+          <td style="color:var(--muted);font-size:0.8rem;">{{ emp.cnpj }}</td>
+          <td style="text-align:center;">{{ emp.usuarios|length }}</td>
+          <td style="text-align:center;">{{ emp.chamados.count() }}</td>
+          <td style="text-align:center;">
+            <span class="badge {% if emp.ativo %}b-ativo{% else %}b-inativo{% endif %}">
+              {% if emp.ativo %}Ativa{% else %}Inativa{% endif %}
+            </span>
+          </td>
+          <td style="text-align:right;">
+            <div style="display:flex;gap:6px;justify-content:flex-end;">
+              <a href="{{ url_for('area_admin.empresa_editar', id=emp.id) }}" class="btn btn-ghost btn-sm">Editar</a>
+              <form method="POST" action="{{ url_for('area_admin.empresa_toggle', id=emp.id) }}" style="display:inline;">
+                <button type="submit" class="btn btn-sm {% if emp.ativo %}btn-danger{% else %}btn-ghost{% endif %}">
+                  {% if emp.ativo %}Desativar{% else %}Ativar{% endif %}
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:32px;">Nenhuma empresa cadastrada.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

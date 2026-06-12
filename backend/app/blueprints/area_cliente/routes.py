@@ -145,6 +145,79 @@ def download_anexo(chamado_id, anexo_id):
                      as_attachment=True)
 
 
+@cliente_bp.route('/boletos')
+@cliente_required
+def boletos():
+    from app.models.boleto import Boleto
+    from itertools import groupby
+    lista = Boleto.query.filter_by(
+        empresa_id=current_user.empresa_id
+    ).order_by(Boleto.competencia_ano.desc(), Boleto.competencia_mes.desc()).all()
+    grupos = {}
+    for b in lista:
+        chave = (b.competencia_ano, b.competencia_mes, b.competencia_label)
+        grupos.setdefault(chave, []).append(b)
+    return render_template('area_cliente/boletos.html',
+        active='boletos',
+        grupos=grupos,
+    )
+
+
+@cliente_bp.route('/boletos/<int:id>/download')
+@cliente_required
+def download_boleto(id):
+    from app.models.boleto import Boleto
+    boleto = Boleto.query.get_or_404(id)
+    if boleto.empresa_id != current_user.empresa_id:
+        abort(403)
+    if not os.path.exists(boleto.caminho_arquivo):
+        flash('Arquivo não encontrado no servidor.', 'erro')
+        return redirect(url_for('area_cliente.boletos'))
+    if boleto.status == 'pendente':
+        boleto.status = 'recebido'
+        boleto.recebido_em = datetime.now()
+        db.session.commit()
+    return send_file(boleto.caminho_arquivo,
+                     download_name=boleto.nome_original,
+                     as_attachment=True)
+
+
+@cliente_bp.route('/recibos')
+@cliente_required
+def recibos():
+    from app.models.recibo import Recibo
+    lista = Recibo.query.filter_by(
+        empresa_id=current_user.empresa_id
+    ).order_by(Recibo.competencia_ano.desc(), Recibo.competencia_mes.desc()).all()
+    grupos = {}
+    for r in lista:
+        chave = (r.competencia_ano, r.competencia_mes, r.competencia_label)
+        grupos.setdefault(chave, []).append(r)
+    return render_template('area_cliente/recibos.html',
+        active='recibos',
+        grupos=grupos,
+    )
+
+
+@cliente_bp.route('/recibos/<int:id>/download')
+@cliente_required
+def download_recibo(id):
+    from app.models.recibo import Recibo
+    recibo = Recibo.query.get_or_404(id)
+    if recibo.empresa_id != current_user.empresa_id:
+        abort(403)
+    if not os.path.exists(recibo.caminho_arquivo):
+        flash('Arquivo não encontrado no servidor.', 'erro')
+        return redirect(url_for('area_cliente.recibos'))
+    if recibo.status == 'pendente':
+        recibo.status = 'recebido'
+        recibo.recebido_em = datetime.now()
+        db.session.commit()
+    return send_file(recibo.caminho_arquivo,
+                     download_name=recibo.nome_original,
+                     as_attachment=True)
+
+
 @cliente_bp.route('/chamados/abrir', methods=['GET', 'POST'])
 @cliente_required
 def abrir_chamado():

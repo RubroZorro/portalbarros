@@ -1,3 +1,4 @@
+import re
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_user, logout_user, login_required, current_user
 from app.models.empresa import Empresa
@@ -7,18 +8,43 @@ from app.extensions import db
 auth_bp = Blueprint('auth', __name__)
 
 
-def _cnpj_digits(cnpj: str) -> str:
-    return cnpj.replace('.', '').replace('/', '').replace('-', '').strip()
+def _so_digitos(valor: str) -> str:
+    return re.sub(r'\D', '', valor)
 
 
 def _redirect_by_role(user, as_url=False):
     routes = {
         'cliente':  'area_cliente.inicio',
-        'admin':    'area_colab.dashboard',
+        'admin':    'area_admin.dashboard',
         'operador': 'area_colab.dashboard',
     }
     target = url_for(routes.get(user.role, 'auth.login'))
     return target if as_url else redirect(target)
+
+
+def _autenticar_por_cpf(digitos, senha):
+    """Busca usuário pelo CPF e verifica a senha."""
+    for u in Usuario.query.filter_by(ativo=True).all():
+        if u.cpf and _so_digitos(u.cpf) == digitos and u.check_password(senha):
+            return u
+    return None
+
+
+def _autenticar_por_cnpj(cnpj_raw, digitos, senha):
+    """Busca empresa pelo CNPJ e itera usuários para verificar a senha."""
+    empresa = Empresa.query.filter(
+        db.or_(Empresa.cnpj == cnpj_raw, Empresa.cnpj == digitos)
+    ).first()
+    if not empresa:
+        for e in Empresa.query.all():
+            if _so_digitos(e.cnpj) == digitos:
+                empresa = e
+                break
+    if empresa:
+        for u in Usuario.query.filter_by(empresa_id=empresa.id, ativo=True).all():
+            if u.check_password(senha):
+                return u
+    return None
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
@@ -27,38 +53,23 @@ def login():
         return _redirect_by_role(current_user)
 
     if request.method == 'POST':
-        cnpj_raw = request.form.get('cnpj', '').strip()
-        cnpj_digits = _cnpj_digits(cnpj_raw)
+        identificador = request.form.get('cnpj', '').strip()
         senha = request.form.get('senha', '').strip()
+        digitos = _so_digitos(identificador)
 
-        empresa = Empresa.query.filter(
-            db.or_(
-                Empresa.cnpj == cnpj_raw,
-                Empresa.cnpj == cnpj_digits,
-            )
-        ).first()
+        if len(digitos) == 11:
+            usuario = _autenticar_por_cpf(digitos, senha)
+        else:
+            usuario = _autenticar_por_cnpj(identificador, digitos, senha)
 
-        if not empresa:
-            all_empresas = Empresa.query.all()
-            for e in all_empresas:
-                if _cnpj_digits(e.cnpj) == cnpj_digits:
-                    empresa = e
-                    break
+        if usuario:
+            login_user(usuario, remember=bool(request.form.get('lembrar')))
+            if usuario.senha_temporaria:
+                return redirect(url_for('auth.trocar_senha'))
+            next_page = request.args.get('next')
+            return redirect(next_page or _redirect_by_role(usuario, as_url=True))
 
-        if empresa:
-            usuario = None
-            for u in Usuario.query.filter_by(empresa_id=empresa.id, ativo=True).all():
-                if u.check_password(senha):
-                    usuario = u
-                    break
-            if usuario:
-                login_user(usuario, remember=bool(request.form.get('lembrar')))
-                if usuario.senha_temporaria:
-                    return redirect(url_for('auth.trocar_senha'))
-                next_page = request.args.get('next')
-                return redirect(next_page or _redirect_by_role(usuario, as_url=True))
-
-        flash('CNPJ ou senha incorretos.', 'erro')
+        flash('CNPJ, CPF ou senha incorretos.', 'erro')
 
     return render_template('auth/login.html')
 

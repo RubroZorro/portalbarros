@@ -1,0 +1,35 @@
+{% extends 'area_admin/layout.html' %}
+{% block title %}{% if empresa %}Editar Empresa{% else %}Nova Empresa{% endif %}{% endblock %}
+{% block topbar_title %}{% if empresa %}Editar Empresa{% else %}Nova Empresa{% endif %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{% if empresa %}Editar Empresa{% else %}Nova Empresa{% endif %}</h1>
+    <p>{% if empresa %}Atualize os dados da empresa.{% else %}Cadastre uma nova empresa cliente.{% endif %}</p>
+  </div>
+</div>
+
+<div class="form-card">
+  <form method="POST">
+    <div class="field-group">
+      <label class="field-label">Razão Social <span class="req">*</span></label>
+      <input type="text" name="razao_social" class="form-control"
+             value="{{ empresa.razao_social if empresa else '' }}"
+             placeholder="Ex: Empresa Exemplo Ltda" required>
+    </div>
+    <div class="field-group">
+      <label class="field-label">CNPJ <span class="req">*</span></label>
+      <input type="text" name="cnpj" class="form-control"
+             value="{{ empresa.cnpj if empresa else '' }}"
+             placeholder="XX.XXX.XXX/XXXX-XX" required>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">
+        {% if empresa %}Salvar Alterações{% else %}Criar Empresa{% endif %}
+      </button>
+      <a href="{{ url_for('area_admin.empresas') }}" class="btn btn-ghost">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

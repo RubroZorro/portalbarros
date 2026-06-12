@@ -3,102 +3,119 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login — Barros &amp; Barros Contabilidade</title>
+  <title>Acesso — Barros &amp; Barros</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --navy: #1B2D6B; --navy-deep: #111e4a; --gold: #C9A227;
-      --white: #fff; --off: #f4f6fb; --text: #1a2340; --muted: #6b7280; --border: #e5e7eb;
+      --navy:      #1B2D6B;
+      --navy-deep: #111e4a;
+      --navy-light:#2a3f8f;
+      --gold:      #C9A227;
+      --white:     #ffffff;
+      --off:       #f4f6fb;
+      --text:      #1a2340;
+      --muted:     #6b7280;
+      --border:    #e5e7eb;
     }
     html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(--off); color: var(--text); }
 
+    /* ── WRAP ── */
     .login-wrap {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      background: linear-gradient(135deg, var(--navy-deep) 0%, var(--navy) 60%, #2a3f8f 100%);
+      min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;
+      background: linear-gradient(145deg, var(--navy-deep) 0%, var(--navy) 55%, #2a3f8f 100%);
     }
 
+    /* ── CARD ── */
     .login-card {
-      background: var(--white);
-      border-radius: 16px;
-      padding: 44px 40px;
-      width: 100%;
-      max-width: 420px;
-      box-shadow: 0 24px 60px rgba(0,0,0,0.25);
+      background: var(--white); border-radius: 20px; padding: 44px 40px;
+      width: 100%; max-width: 430px;
+      box-shadow: 0 28px 70px rgba(0,0,0,0.28);
     }
 
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 36px;
-    }
+    /* ── BRAND ── */
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 36px; }
     .bb-mark {
-      font-family: 'Cormorant Garamond', serif;
-      font-weight: 700; font-size: 2.4rem; line-height: 1; letter-spacing: -1px;
+      font-family: 'Cormorant Garamond', serif; font-weight: 700;
+      font-size: 2.4rem; line-height: 1; letter-spacing: -1px; flex-shrink: 0;
     }
     .bb-mark .b1 { color: var(--gold); }
     .bb-mark .b2 { color: var(--navy); }
-    .brand-sep { width: 1px; height: 36px; background: rgba(201,162,39,0.4); }
+    .brand-sep { width: 1px; height: 36px; background: rgba(201,162,39,0.35); flex-shrink: 0; }
     .brand-text .brand-name {
       font-family: 'Cormorant Garamond', serif; font-weight: 700;
-      font-size: 0.9rem; color: var(--navy); text-transform: uppercase; letter-spacing: 0.05em;
+      font-size: 0.88rem; color: var(--navy); text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.2;
     }
     .brand-text .brand-sub {
-      font-size: 0.62rem; font-weight: 300; letter-spacing: 0.18em; color: var(--gold);
-      text-transform: uppercase; border-top: 1px solid rgba(201,162,39,0.35);
+      font-size: 0.6rem; font-weight: 300; letter-spacing: 0.18em; color: var(--gold);
+      text-transform: uppercase; border-top: 1px solid rgba(201,162,39,0.3);
       padding-top: 3px; margin-top: 3px;
     }
 
-    h2 { font-size: 1.35rem; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
-    .subtitle { font-size: 0.82rem; color: var(--muted); margin-bottom: 28px; }
+    /* ── HEADING ── */
+    h2 { font-family: 'Cormorant Garamond', serif; font-size: 1.55rem; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+    .subtitle { font-size: 0.8rem; color: var(--muted); margin-bottom: 28px; line-height: 1.5; }
 
+    /* ── FORM ── */
     .form-group { margin-bottom: 18px; }
     label { display: block; font-size: 0.8rem; font-weight: 500; color: var(--text); margin-bottom: 6px; }
     .form-control {
-      width: 100%; padding: 11px 14px; border: 1.5px solid var(--border);
-      border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem;
-      color: var(--text); background: var(--white); transition: border-color 0.15s;
-      outline: none;
+      width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 10px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.9rem; color: var(--text);
+      background: var(--white); transition: border-color 0.15s; outline: none;
     }
     .form-control:focus { border-color: var(--navy); }
     .form-control::placeholder { color: #b0b8c1; }
 
+    /* ── REMEMBER ── */
     .remember-row {
-      display: flex; align-items: center; gap: 8px;
-      margin-bottom: 24px; font-size: 0.82rem; color: var(--muted);
+      display: flex; align-items: center; gap: 8px; margin-bottom: 26px;
+      font-size: 0.82rem; color: var(--muted);
     }
     .remember-row input { width: 15px; height: 15px; accent-color: var(--navy); cursor: pointer; }
 
+    /* ── BUTTON ── */
     .btn-login {
-      width: 100%; padding: 13px;
-      background: var(--navy); color: var(--white);
-      border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif;
-      font-size: 0.9rem; font-weight: 600; cursor: pointer;
-      transition: background 0.15s, transform 0.1s;
+      width: 100%; padding: 13px; background: var(--navy); color: var(--white);
+      border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: background 0.15s;
     }
-    .btn-login:hover { background: #2a3f8f; }
-    .btn-login:active { transform: scale(0.99); }
+    .btn-login:hover { background: var(--navy-light); }
 
-    .alert {
-      padding: 12px 14px; border-radius: 8px; margin-bottom: 20px;
-      font-size: 0.82rem; font-weight: 500;
+    /* ── ALERTS ── */
+    .alert { padding: 12px 14px; border-radius: 10px; margin-bottom: 20px; font-size: 0.82rem; font-weight: 500; }
+    .alert-erro    { background: rgba(220,38,38,0.08); color: #b91c1c; border: 1px solid rgba(220,38,38,0.18); }
+    .alert-sucesso { background: rgba(22,163,74,0.08);  color: #15803d; border: 1px solid rgba(22,163,74,0.18); }
+
+    /* ── DIVIDER ── */
+    .login-divider {
+      display: flex; align-items: center; gap: 10px; margin: 22px 0;
     }
-    .alert-erro { background: rgba(220,38,38,0.08); color: #b91c1c; border: 1px solid rgba(220,38,38,0.18); }
-    .alert-sucesso { background: rgba(22,163,74,0.08); color: #15803d; border: 1px solid rgba(22,163,74,0.18); }
+    .login-divider::before, .login-divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+    .login-divider span { font-size: 0.72rem; color: var(--muted); white-space: nowrap; }
 
-    .login-footer { margin-top: 28px; text-align: center; font-size: 0.75rem; color: var(--muted); }
+    /* ── HINT CARDS (CNPJ vs CPF) ── */
+    .hint-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 24px; }
+    .hint-card {
+      padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px;
+      background: var(--off);
+    }
+    .hint-card .hc-label { font-size: 0.65rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+    .hint-card .hc-val { font-size: 0.78rem; font-weight: 600; color: var(--navy); }
+    .hint-card .hc-desc { font-size: 0.65rem; color: var(--muted); margin-top: 1px; }
+
+    /* ── FOOTER ── */
+    .login-footer { margin-top: 24px; text-align: center; font-size: 0.75rem; color: var(--muted); }
     .login-footer a { color: var(--navy); text-decoration: none; }
     .login-footer a:hover { text-decoration: underline; }
 
     @media (max-width: 480px) {
       .login-card { padding: 32px 24px; }
+      .hint-row { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -106,6 +123,7 @@
 <div class="login-wrap">
   <div class="login-card">
 
+    <!-- Brand -->
     <div class="brand">
       <div class="bb-mark"><span class="b1">B</span><span class="b2">B</span></div>
       <div class="brand-sep"></div>
@@ -116,7 +134,7 @@
     </div>
 
     <h2>Acesso ao Portal</h2>
-    <p class="subtitle">Entre com o CNPJ da sua empresa e sua senha.</p>
+    <p class="subtitle">Clientes usam o CNPJ da empresa. Colaboradores usam o CPF individual.</p>
 
     {% with messages = get_flashed_messages(with_categories=True) %}
       {% for cat, msg in messages %}
@@ -126,10 +144,11 @@
 
     <form method="POST" action="{{ url_for('auth.login') }}">
       <div class="form-group">
-        <label for="cnpj">CNPJ da empresa</label>
+        <label for="cnpj">CNPJ da empresa ou CPF do colaborador</label>
         <input type="text" id="cnpj" name="cnpj" class="form-control"
-               placeholder="00.000.000/0000-00" maxlength="18"
-               value="{{ request.form.get('cnpj', '') }}" required>
+               placeholder="00.000.000/0001-00 ou 000.000.000-00"
+               value="{{ request.form.get('cnpj', '') }}" maxlength="18" required autofocus
+               autocomplete="off" inputmode="text">
       </div>
       <div class="form-group">
         <label for="senha">Senha</label>
@@ -143,6 +162,21 @@
       <button type="submit" class="btn-login">Entrar</button>
     </form>
 
+    <div class="login-divider"><span>Como acessar</span></div>
+
+    <div class="hint-row">
+      <div class="hint-card">
+        <div class="hc-label">Clientes</div>
+        <div class="hc-val">CNPJ</div>
+        <div class="hc-desc">CNPJ da empresa (14 dígitos)</div>
+      </div>
+      <div class="hint-card">
+        <div class="hc-label">Colaboradores</div>
+        <div class="hc-val">CPF</div>
+        <div class="hc-desc">CPF individual (11 dígitos)</div>
+      </div>
+    </div>
+
     <div class="login-footer">
       <a href="#">Esqueci minha senha</a>
       &nbsp;·&nbsp;
@@ -151,5 +185,58 @@
 
   </div>
 </div>
+<script>
+  (function () {
+    var campo = document.getElementById('cnpj');
+    if (!campo) return;
+
+    function soDigitos(v) { return v.replace(/\D/g, ''); }
+
+    function mascaraCPF(d) {
+      return d.substring(0,3) +
+             (d.length > 3  ? '.' + d.substring(3,6)  : '') +
+             (d.length > 6  ? '.' + d.substring(6,9)  : '') +
+             (d.length > 9  ? '-' + d.substring(9,11) : '');
+    }
+
+    function mascaraCNPJ(d) {
+      return d.substring(0,2) +
+             (d.length > 2  ? '.' + d.substring(2,5)   : '') +
+             (d.length > 5  ? '.' + d.substring(5,8)   : '') +
+             (d.length > 8  ? '/' + d.substring(8,12)  : '') +
+             (d.length > 12 ? '-' + d.substring(12,14) : '');
+    }
+
+    function aplicarMascara(v) {
+      var d = soDigitos(v).substring(0, 14);
+      if (d.length === 0) return '';
+      if (d.length <= 11) return mascaraCPF(d);
+      return mascaraCNPJ(d);
+    }
+
+    campo.addEventListener('input', function () {
+      var pos = this.selectionStart;
+      var anteriorDigitos = soDigitos(this.value.substring(0, pos)).length;
+      var novo = aplicarMascara(this.value);
+      this.value = novo;
+      /* reposiciona o cursor depois dos dígitos já digitados */
+      var cont = 0, i = 0;
+      for (; i < novo.length && cont < anteriorDigitos; i++) {
+        if (/\d/.test(novo[i])) cont++;
+      }
+      this.setSelectionRange(i, i);
+    });
+
+    /* ao colar: aplica máscara imediatamente */
+    campo.addEventListener('paste', function () {
+      setTimeout(function () {
+        campo.value = aplicarMascara(campo.value);
+      }, 0);
+    });
+
+    /* aplica máscara no valor preenchido pelo servidor (POST com erro) */
+    if (campo.value) campo.value = aplicarMascara(campo.value);
+  })();
+</script>
 </body>
 </html>

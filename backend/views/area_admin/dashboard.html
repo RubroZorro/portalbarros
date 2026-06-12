@@ -1,106 +1,204 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin — Barros &amp; Barros</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root { --navy: #1B2D6B; --gold: #C9A227; --white: #fff; --off: #f4f6fb; --text: #1a2340; --muted: #6b7280; --border: #e5e7eb; }
-    body { font-family: 'DM Sans', sans-serif; background: var(--off); color: var(--text); }
-    .topbar {
-      background: var(--navy); color: #fff; padding: 0 28px; height: 60px;
-      display: flex; align-items: center; justify-content: space-between;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    }
-    .brand { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; font-weight: 700; }
-    .brand .g { color: var(--gold); }
-    .tag { font-size: 0.72rem; background: rgba(201,162,39,0.2); color: var(--gold); padding: 3px 10px; border-radius: 100px; }
-    .logout { color: rgba(255,255,255,0.6); text-decoration: none; font-size: 0.82rem; }
-    .logout:hover { color: #fff; }
-    .main { padding: 32px 28px; }
-    h1 { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; color: var(--navy); margin-bottom: 6px; }
-    .sub { font-size: 0.82rem; color: var(--muted); margin-bottom: 28px; }
-    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 16px; margin-bottom: 32px; }
-    .stat { background: #fff; border-radius: 10px; border: 1px solid var(--border); padding: 20px; }
-    .stat-val { font-family: 'Cormorant Garamond', serif; font-size: 2rem; font-weight: 700; color: var(--navy); }
-    .stat-lbl { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
-    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
-    th { background: var(--off); padding: 10px 16px; text-align: left; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); }
-    td { padding: 13px 16px; font-size: 0.84rem; border-bottom: 1px solid var(--border); }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: var(--off); }
-    .badge { display: inline-block; font-size: 0.68rem; font-weight: 500; padding: 3px 9px; border-radius: 100px; }
-    .b-pendente   { background: rgba(201,162,39,0.12); color: #856300; }
-    .b-recebido   { background: rgba(37,99,235,0.10);  color: #1d4ed8; }
-    .b-finalizado { background: rgba(22,163,74,0.10);  color: #15803d; }
-    .update-form { display: inline-flex; align-items: center; gap: 6px; }
-    select { padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.78rem; font-family: 'DM Sans', sans-serif; }
-    .btn-sm { padding: 4px 12px; background: var(--navy); color: #fff; border: none; border-radius: 6px; font-size: 0.78rem; cursor: pointer; }
-    .section-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-    .section-title::before { content: ''; width: 3px; height: 15px; background: var(--gold); border-radius: 2px; }
-  </style>
-</head>
-<body>
-<div class="topbar">
-  <div style="display:flex;align-items:center;gap:14px;">
-    <div class="brand"><span class="g">B</span>B Contabilidade</div>
-    <span class="tag">Admin</span>
+{% extends 'area_admin/layout.html' %}
+{% block title %}Dashboard Admin{% endblock %}
+{% block topbar_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Painel Administrativo</h1>
+    <p>Olá, {{ current_user.nome }}. Visão geral da operação.</p>
   </div>
-  <a href="{{ url_for('auth.logout') }}" class="logout">Sair →</a>
 </div>
-<div class="main">
-  <h1>Painel Administrativo</h1>
-  <p class="sub">Olá, {{ current_user.nome }}. Gerencie chamados, clientes e comunicados.</p>
 
-  <div class="stats">
-    <div class="stat">
-      <div class="stat-val">{{ chamados_pendentes }}</div>
-      <div class="stat-lbl">Chamados pendentes</div>
+<!-- Stats gerais -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon i-navy">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+      </svg>
     </div>
-    <div class="stat">
-      <div class="stat-val">{{ total_empresas }}</div>
-      <div class="stat-lbl">Empresas ativas</div>
-    </div>
+    <div class="stat-val">{{ total_abertos }}</div>
+    <div class="stat-lbl">Chamados em aberto</div>
   </div>
+  <div class="stat-card">
+    <div class="stat-icon i-green">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </div>
+    <div class="stat-val">{{ finalizados_mes }}</div>
+    <div class="stat-lbl">Finalizados este mês</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon i-gold">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+      </svg>
+    </div>
+    <div class="stat-val">{{ total_empresas }}</div>
+    <div class="stat-lbl">Empresas ativas</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon i-blue">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
+      </svg>
+    </div>
+    <div class="stat-val">{{ total_colaboradores }}</div>
+    <div class="stat-lbl">Colaboradores ativos</div>
+  </div>
+</div>
 
-  <div class="section-title">Chamados Recentes</div>
-  <table>
-    <thead>
-      <tr>
-        <th>Nº</th>
-        <th>Empresa</th>
-        <th>Assunto</th>
-        <th>Tipo</th>
-        <th>Status</th>
-        <th>Ação</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for ch in chamados_recentes %}
-      <tr>
-        <td>{{ ch.numero }}</td>
-        <td>{{ ch.empresa.razao_social }}</td>
-        <td>{{ ch.titulo }}</td>
-        <td>{{ ch.tipo_label }}</td>
-        <td><span class="badge b-{{ ch.status }}">{{ ch.status_label }}</span></td>
-        <td>
-          <form class="update-form" method="POST" action="{{ url_for('area_colab.atualizar_status', id=ch.id) }}">
-            <select name="status">
-              <option value="pendente"   {% if ch.status == 'pendente'   %}selected{% endif %}>Pendente</option>
-              <option value="recebido"   {% if ch.status == 'recebido'   %}selected{% endif %}>Recebido</option>
-              <option value="finalizado" {% if ch.status == 'finalizado' %}selected{% endif %}>Finalizado</option>
-            </select>
-            <button type="submit" class="btn-sm">Salvar</button>
-          </form>
-        </td>
-      </tr>
+<!-- Painel de saúde -->
+<div class="sec-card" style="margin-bottom:22px;">
+  <div class="sec-card-header">
+    <span class="sec-card-title">Saúde Operacional</span>
+  </div>
+  <div style="padding:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+
+    <!-- Prazos vencidos -->
+    <div class="health-card">
+      <div class="health-head">
+        <div class="health-icon hi-red">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <div class="health-info">
+          <div class="health-count {% if chamados_vencidos|length == 0 %}health-ok{% endif %}">{{ chamados_vencidos|length }}</div>
+          <div class="health-label">Prazos vencidos</div>
+        </div>
+      </div>
+      {% if chamados_vencidos %}
+      <div class="health-body">
+        {% for ch in chamados_vencidos %}
+        <a href="{{ url_for('area_colab.chamado_detalhe', id=ch.id) }}" class="health-item" style="text-decoration:none;">
+          <span class="health-item-num">{{ ch.numero }}</span>
+          <span class="health-item-desc">{{ ch.empresa.razao_social }}</span>
+          <span class="badge b-vermelho" style="font-size:0.62rem;flex-shrink:0;">{{ ch.tempo_restante_str }}</span>
+        </a>
+        {% endfor %}
+      </div>
       {% else %}
-      <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px;">Nenhum chamado encontrado.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+      <div class="health-empty">Nenhum prazo vencido</div>
+      {% endif %}
+    </div>
+
+    <!-- Sem responsável > 24h -->
+    <div class="health-card">
+      <div class="health-head">
+        <div class="health-icon hi-amber">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <div class="health-info">
+          <div class="health-count {% if sem_responsavel|length == 0 %}health-ok{% endif %}">{{ sem_responsavel|length }}</div>
+          <div class="health-label">Sem responsável &gt; 24h</div>
+        </div>
+      </div>
+      {% if sem_responsavel %}
+      <div class="health-body">
+        {% for ch in sem_responsavel %}
+        <a href="{{ url_for('area_colab.chamado_detalhe', id=ch.id) }}" class="health-item" style="text-decoration:none;">
+          <span class="health-item-num">{{ ch.numero }}</span>
+          <span class="health-item-desc">{{ ch.empresa.razao_social }}</span>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="health-empty">Tudo em dia</div>
+      {% endif %}
+    </div>
+
+    <!-- Em andamento sem movimentação > 3 dias -->
+    <div class="health-card">
+      <div class="health-head">
+        <div class="health-icon hi-blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div class="health-info">
+          <div class="health-count {% if sem_movimentacao|length == 0 %}health-ok{% endif %}">{{ sem_movimentacao|length }}</div>
+          <div class="health-label">Parados &gt; 3 dias</div>
+        </div>
+      </div>
+      {% if sem_movimentacao %}
+      <div class="health-body">
+        {% for ch in sem_movimentacao %}
+        <a href="{{ url_for('area_colab.chamado_detalhe', id=ch.id) }}" class="health-item" style="text-decoration:none;">
+          <span class="health-item-num">{{ ch.numero }}</span>
+          <span class="health-item-desc">
+            {% if ch.responsavel %}{{ ch.responsavel.nome }}{% else %}sem responsável{% endif %}
+          </span>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="health-empty">Nenhum chamado parado</div>
+      {% endif %}
+    </div>
+
+  </div>
 </div>
-</body>
-</html>
+
+<!-- Métricas de colaboradores -->
+<div class="sec-card">
+  <div class="sec-card-header">
+    <span class="sec-card-title">Desempenho por Colaborador</span>
+    <div style="display:flex;gap:6px;">
+      {% for p in [7, 30, 90] %}
+      <a href="{{ url_for('area_admin.dashboard', periodo=p) }}"
+         style="padding:4px 12px;border-radius:6px;font-size:0.76rem;font-weight:600;text-decoration:none;
+                {% if periodo == p %}background:var(--navy);color:white;{% else %}background:var(--off);color:var(--muted);border:1px solid var(--border);{% endif %}">
+        {{ p }}d
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  <div style="overflow-x:auto;">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Colaborador</th>
+          <th style="text-align:center;">Chamados pegos</th>
+          <th style="text-align:center;">Finalizados</th>
+          <th style="text-align:center;">Devolvidos</th>
+          <th style="text-align:center;">Taxa de devolução</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in metricas_colab %}
+        <tr>
+          <td style="font-weight:500;">{{ m.nome }}</td>
+          <td style="text-align:center;">{{ m.pegos }}</td>
+          <td style="text-align:center;">
+            <span style="color:#15803d;font-weight:600;">{{ m.finalizados }}</span>
+          </td>
+          <td style="text-align:center;">{{ m.devolvidos }}</td>
+          <td style="text-align:center;">
+            {% if m.taxa_devolucao > 50 %}
+              <span class="badge b-vermelho">{{ m.taxa_devolucao }}%</span>
+            {% elif m.taxa_devolucao > 20 %}
+              <span class="badge b-pendente">{{ m.taxa_devolucao }}%</span>
+            {% else %}
+              <span class="badge b-ativo">{{ m.taxa_devolucao }}%</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">Nenhum colaborador ativo encontrado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

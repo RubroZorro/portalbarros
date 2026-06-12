@@ -1,0 +1,137 @@
+{% extends 'area_admin/layout.html' %}
+{% block title %}Boletos{% endblock %}
+{% block topbar_title %}Boletos{% endblock %}
+
+{% block head %}
+<style>
+  .upload-card { background: white; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 1px 4px rgba(0,0,0,0.05); padding: 22px 24px; margin-bottom: 22px; }
+  .upload-title { font-size: 0.88rem; font-weight: 600; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .upload-title::before { content: ''; display: block; width: 3px; height: 14px; background: var(--gold); border-radius: 2px; }
+  .upload-row { display: grid; grid-template-columns: 1fr 160px 100px 1fr auto; gap: 10px; align-items: end; }
+  .upload-file-label { display: flex; align-items: center; gap: 8px; padding: 10px 13px; border: 1.5px dashed var(--border); border-radius: 8px; cursor: pointer; transition: border-color 0.15s; font-size: 0.84rem; color: var(--muted); background: var(--off); }
+  .upload-file-label:hover { border-color: var(--navy); color: var(--navy); }
+  .upload-file-label svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .filter-bar { display: flex; gap: 10px; align-items: center; margin-bottom: 18px; flex-wrap: wrap; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Boletos</h1>
+    <p>Gerencie boletos disponíveis para download pelos clientes.</p>
+  </div>
+</div>
+
+<!-- Upload form -->
+<div class="upload-card">
+  <div class="upload-title">Enviar Novo Boleto</div>
+  <form method="POST" action="{{ url_for('area_admin.boleto_upload') }}" enctype="multipart/form-data">
+    <div class="upload-row">
+      <div>
+        <label class="field-label">Empresa <span class="req">*</span></label>
+        <select name="empresa_id" class="form-control" required>
+          <option value="">Selecione...</option>
+          {% for emp in empresas %}
+          <option value="{{ emp.id }}" {% if empresa_filtro == emp.id %}selected{% endif %}>{{ emp.razao_social }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="field-label">Mês <span class="req">*</span></label>
+        <select name="mes" class="form-control" required>
+          {% for nome in meses %}
+          <option value="{{ loop.index }}">{{ nome }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="field-label">Ano <span class="req">*</span></label>
+        <input type="number" name="ano" class="form-control" value="{{ ano_atual }}" min="2020" max="2099" required>
+      </div>
+      <div>
+        <label class="field-label">Arquivo PDF <span class="req">*</span></label>
+        <label class="upload-file-label" for="boleto-file">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
+            <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.29"/>
+          </svg>
+          <span id="boleto-filename">Selecionar PDF...</span>
+        </label>
+        <input type="file" id="boleto-file" name="arquivo" accept=".pdf" style="display:none;"
+               onchange="document.getElementById('boleto-filename').textContent = this.files[0]?.name || 'Selecionar PDF...'">
+      </div>
+      <div>
+        <label class="field-label">&nbsp;</label>
+        <button type="submit" class="btn btn-primary" style="width:100%;">Enviar</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Filtro -->
+<form method="GET" class="filter-bar">
+  <select name="empresa_id" class="form-control" style="max-width:260px;">
+    <option value="">Todas as empresas</option>
+    {% for emp in empresas %}
+    <option value="{{ emp.id }}" {% if empresa_filtro == emp.id %}selected{% endif %}>{{ emp.razao_social }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn btn-ghost">Filtrar</button>
+  {% if empresa_filtro %}
+  <a href="{{ url_for('area_admin.boletos') }}" class="btn btn-ghost">Limpar</a>
+  {% endif %}
+</form>
+
+<!-- Listagem -->
+<div class="sec-card">
+  <div style="overflow-x:auto;">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Empresa</th>
+          <th>Competência</th>
+          <th>Arquivo</th>
+          <th>Enviado em</th>
+          <th style="text-align:center;">Status</th>
+          <th style="text-align:right;">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in boletos %}
+        <tr>
+          <td style="font-weight:500;">{{ b.empresa.razao_social }}</td>
+          <td>{{ b.competencia_label }}</td>
+          <td style="font-size:0.8rem;color:var(--muted);">
+            {{ b.nome_original }}
+            <span style="margin-left:4px;">({{ b.tamanho_str }})</span>
+          </td>
+          <td style="font-size:0.8rem;color:var(--muted);">
+            {{ b.enviado_em.strftime('%d/%m/%Y %H:%M') }}
+            <br><span style="font-size:0.72rem;">por {{ b.enviado_por.nome }}</span>
+          </td>
+          <td style="text-align:center;">
+            <span class="badge b-{{ b.status }}">
+              {% if b.status == 'recebido' %}Recebido{% else %}Pendente{% endif %}
+            </span>
+            {% if b.recebido_em %}
+            <div style="font-size:0.65rem;color:var(--muted);margin-top:2px;">
+              {{ b.recebido_em.strftime('%d/%m %H:%M') }}
+            </div>
+            {% endif %}
+          </td>
+          <td style="text-align:right;">
+            <form method="POST" action="{{ url_for('area_admin.boleto_excluir', id=b.id) }}" style="display:inline;"
+                  onsubmit="return confirm('Excluir este boleto?')">
+              <button type="submit" class="btn btn-danger btn-sm">Excluir</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:32px;">Nenhum boleto encontrado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
