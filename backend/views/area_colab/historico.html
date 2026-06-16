@@ -1,0 +1,170 @@
+{% extends 'area_colab/layout.html' %}
+{% block title %}Histórico de Chamados{% endblock %}
+{% block topbar_title %}Histórico de Chamados{% endblock %}
+
+{% block head %}
+<style>
+  .hist-filters {
+    background: #fff; border-radius: 14px; border: 1px solid var(--border);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05); padding: 16px 20px;
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;
+    margin-bottom: 20px;
+  }
+  .hist-filters label { display: block; font-size: 0.72rem; font-weight: 600; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .hist-filters select,
+  .hist-filters input[type=text],
+  .hist-filters input[type=date] {
+    padding: 8px 11px; border: 1.5px solid var(--border); border-radius: 9px;
+    font-size: 0.82rem; font-family: 'DM Sans', sans-serif; color: var(--text);
+    outline: none; background: #fff; transition: border-color 0.15s;
+  }
+  .hist-filters select:focus,
+  .hist-filters input:focus { border-color: var(--navy); }
+  .hf-group { display: flex; flex-direction: column; }
+  .hf-actions { display: flex; gap: 8px; align-items: flex-end; margin-top: 0; }
+  .hf-btn { padding: 9px 20px; background: var(--navy); color: #fff; border: none; border-radius: 9px; font-size: 0.82rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans',sans-serif; }
+  .hf-btn:hover { background: var(--navy-light); }
+  .hf-clear { padding: 9px 14px; background: #fff; color: var(--muted); border: 1.5px solid var(--border); border-radius: 9px; font-size: 0.82rem; cursor: pointer; font-family: 'DM Sans',sans-serif; text-decoration: none; }
+  .hf-clear:hover { border-color: var(--navy); color: var(--navy); }
+
+  .hist-table { background: #fff; border-radius: 14px; border: 1px solid var(--border); box-shadow: 0 1px 4px rgba(0,0,0,0.05); overflow: hidden; }
+  .ht-head, .ht-row {
+    display: grid;
+    grid-template-columns: 72px 1fr 130px 150px 150px 80px;
+    gap: 8px; align-items: center; padding: 12px 18px;
+  }
+  .ht-head {
+    background: var(--off); border-bottom: 1px solid var(--border);
+    font-size: 0.68rem; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .ht-row {
+    border-bottom: 1px solid var(--border); font-size: 0.84rem;
+    text-decoration: none; color: inherit; transition: background 0.12s;
+  }
+  .ht-row:last-child { border-bottom: none; }
+  .ht-row:hover { background: #f8f9ff; }
+  .ht-num { font-size: 0.76rem; font-weight: 600; color: var(--muted); }
+  .ht-titulo { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px; }
+  .ht-empresa { font-size: 0.78rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ht-colab { font-size: 0.78rem; color: var(--muted); }
+  .ht-data { font-size: 0.78rem; color: var(--muted); }
+  .ht-ver { font-size: 0.76rem; font-weight: 600; color: var(--navy); text-decoration: none; white-space: nowrap; }
+  .ht-ver:hover { text-decoration: underline; }
+
+  .hist-empty { padding: 56px 24px; text-align: center; color: var(--muted); }
+  .hist-empty svg { width: 40px; height: 40px; margin-bottom: 12px; opacity: 0.3; }
+  .hist-empty p { font-size: 0.875rem; }
+
+  .hist-count { font-size: 0.8rem; color: var(--muted); margin-bottom: 12px; }
+  .hist-count strong { color: var(--text); }
+
+  @media (max-width: 900px) {
+    .ht-head, .ht-row { grid-template-columns: 60px 1fr 110px 100px; }
+    .ht-head > *:nth-child(4),
+    .ht-row  > *:nth-child(4),
+    .ht-head > *:nth-child(5),
+    .ht-row  > *:nth-child(5) { display: none; }
+  }
+  @media (max-width: 600px) {
+    .ht-head { display: none; }
+    .ht-row { grid-template-columns: 1fr auto; }
+    .ht-row > *:nth-child(1),
+    .ht-row > *:nth-child(3) { display: none; }
+    .ht-titulo { white-space: normal; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Histórico de Chamados</h1>
+    <p>Todos os chamados finalizados, com filtros por data, empresa e tipo.</p>
+  </div>
+  <a href="{{ url_for('area_colab.dashboard') }}"
+     style="display:inline-flex;align-items:center;gap:7px;padding:9px 18px;background:var(--off);color:var(--navy);border:1px solid var(--border);border-radius:9px;text-decoration:none;font-size:0.82rem;font-weight:600;">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    Voltar ao Kanban
+  </a>
+</div>
+
+<form method="GET" action="{{ url_for('area_colab.historico') }}" class="hist-filters">
+  <div class="hf-group">
+    <label>Empresa</label>
+    <select name="empresa_id" style="min-width:160px;">
+      <option value="">Todas</option>
+      {% for emp in empresas_filtro %}
+        <option value="{{ emp.id }}" {% if f_empresa == emp.id %}selected{% endif %}>
+          {{ emp.razao_social|truncate(28, True, '…') }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="hf-group">
+    <label>Tipo</label>
+    <select name="tipo">
+      <option value="">Todos</option>
+      <option value="rescisao"      {% if f_tipo == 'rescisao' %}selected{% endif %}>Rescisão</option>
+      <option value="certidao"      {% if f_tipo == 'certidao' %}selected{% endif %}>Certidão</option>
+      <option value="notas_fiscais" {% if f_tipo == 'notas_fiscais' %}selected{% endif %}>Notas Fiscais</option>
+    </select>
+  </div>
+  <div class="hf-group">
+    <label>Colaborador</label>
+    <input type="text" name="colaborador" value="{{ f_colab }}" placeholder="Nome…" style="width:140px;">
+  </div>
+  <div class="hf-group">
+    <label>De</label>
+    <input type="date" name="de" value="{{ f_de }}">
+  </div>
+  <div class="hf-group">
+    <label>Até</label>
+    <input type="date" name="ate" value="{{ f_ate }}">
+  </div>
+  <div class="hf-actions">
+    <button type="submit" class="hf-btn">Filtrar</button>
+    {% if f_empresa or f_tipo or f_colab or f_de or f_ate %}
+      <a href="{{ url_for('area_colab.historico') }}" class="hf-clear">Limpar</a>
+    {% endif %}
+  </div>
+</form>
+
+{% if chamados %}
+<p class="hist-count"><strong>{{ chamados|length }}</strong> chamado{{ 's' if chamados|length != 1 else '' }} encontrado{{ 's' if chamados|length != 1 else '' }}.</p>
+
+<div class="hist-table">
+  <div class="ht-head">
+    <span>Número</span>
+    <span>Assunto</span>
+    <span>Tipo</span>
+    <span>Empresa</span>
+    <span>Finalizado por</span>
+    <span></span>
+  </div>
+  {% for ch in chamados %}
+  <div class="ht-row">
+    <span class="ht-num">{{ ch.numero }}</span>
+    <span class="ht-titulo" title="{{ ch.titulo }}">{{ ch.titulo }}</span>
+    <span><span class="tipo-badge tb-{{ ch.tipo }}">{{ ch.tipo_label }}</span></span>
+    <span class="ht-empresa" title="{{ ch.empresa.razao_social }}">{{ ch.empresa.razao_social }}</span>
+    <span class="ht-colab">
+      {% if ch.finalizado_por_nome %}{{ ch.finalizado_por_nome }}{% endif %}
+      {% if ch.finalizado_em %}<br><span style="font-size:0.7rem;color:var(--soft);">{{ ch.finalizado_em.strftime('%d/%m/%Y %H:%M') }}</span>{% endif %}
+    </span>
+    <a href="{{ url_for('area_colab.chamado_detalhe', id=ch.id) }}" class="ht-ver">Ver →</a>
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="hist-table">
+  <div class="hist-empty">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/>
+    </svg>
+    <p>{% if f_empresa or f_tipo or f_colab or f_de or f_ate %}Nenhum chamado encontrado com estes filtros.{% else %}Nenhum chamado finalizado ainda.{% endif %}</p>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

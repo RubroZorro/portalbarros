@@ -133,31 +133,8 @@
       <span class="k-col-dot kd-finalizado"></span>
       <span class="k-title">Finalizado</span>
       <span class="k-count kc-finalizado">{{ finalizado|length }}</span>
+      <span style="font-size:0.62rem;color:var(--soft);margin-left:auto;">últimas 12h</span>
     </div>
-
-    <!-- Filtros -->
-    <form method="GET" action="{{ url_for('area_colab.dashboard') }}" class="k-filters">
-      <select name="empresa_id" class="k-f-input" style="max-width:120px;">
-        <option value="">Empresa</option>
-        {% for emp in empresas_filtro %}
-          <option value="{{ emp.id }}" {% if f_empresa == emp.id %}selected{% endif %}>
-            {{ emp.razao_social|truncate(20, True, '…') }}
-          </option>
-        {% endfor %}
-      </select>
-      <select name="tipo" class="k-f-input">
-        <option value="">Tipo</option>
-        <option value="rescisao"      {% if f_tipo == 'rescisao' %}selected{% endif %}>Rescisão</option>
-        <option value="certidao"      {% if f_tipo == 'certidao' %}selected{% endif %}>Certidão</option>
-        <option value="notas_fiscais" {% if f_tipo == 'notas_fiscais' %}selected{% endif %}>Notas Fiscais</option>
-      </select>
-      <input type="date" name="de"  class="k-f-input" value="{{ f_de }}"  title="De">
-      <input type="date" name="ate" class="k-f-input" value="{{ f_ate }}" title="Até">
-      <button type="submit" class="k-f-btn">Filtrar</button>
-      {% if f_empresa or f_tipo or f_colab or f_de or f_ate %}
-        <a href="{{ url_for('area_colab.dashboard') }}" class="k-f-clear">Limpar</a>
-      {% endif %}
-    </form>
 
     <div class="k-cards">
       {% for ch in finalizado %}
@@ -170,7 +147,7 @@
         {% if ch.finalizado_por_nome %}
         <div class="ch-fin-info">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          {{ ch.finalizado_por_nome }}{% if ch.finalizado_em %} · {{ ch.finalizado_em.strftime('%d/%m/%y') }}{% endif %}
+          {{ ch.finalizado_por_nome }}{% if ch.finalizado_em %} · {{ ch.finalizado_em.strftime('%d/%m %H:%M') }}{% endif %}
         </div>
         {% endif %}
         <div class="ch-actions">
@@ -178,15 +155,16 @@
         </div>
       </div>
       {% else %}
-      <div class="k-empty">
-        {% if f_empresa or f_tipo or f_colab or f_de or f_ate %}
-          Nenhum chamado encontrado com estes filtros.
-        {% else %}
-          Nenhum chamado finalizado.
-        {% endif %}
-      </div>
+      <div class="k-empty">Nenhum chamado finalizado nas últimas 12h.</div>
       {% endfor %}
     </div>
+
+    <a href="{{ url_for('area_colab.historico') }}" class="k-add">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/>
+      </svg>
+      Ver histórico completo
+    </a>
   </div>
 
   </div><!-- /kanban -->

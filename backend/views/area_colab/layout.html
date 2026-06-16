@@ -449,6 +449,13 @@
       Kanban de Chamados
     </a>
 
+    <a class="nav-item {% if active == 'historico' %}active{% endif %}" href="{{ url_for('area_colab.historico') }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/>
+      </svg>
+      Histórico
+    </a>
+
     <a class="nav-item {% if active == 'criar_chamado_interno' %}active{% endif %}" href="{{ url_for('area_colab.criar_chamado_interno') }}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>

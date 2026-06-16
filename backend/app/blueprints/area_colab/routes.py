@@ -44,12 +44,7 @@ def _empresas_clientes():
 @colab_bp.route('/dashboard')
 @colab_required
 def dashboard():
-    # Filtros para coluna Finalizado
-    f_empresa = request.args.get('empresa_id', type=int)
-    f_tipo    = request.args.get('tipo', '')
-    f_colab   = request.args.get('colaborador', '')
-    f_de      = request.args.get('de', '')
-    f_ate     = request.args.get('ate', '')
+    from datetime import timedelta
 
     em_aberto = Chamado.query.filter(
         Chamado.status.in_(['pendente', 'devolvido']),
@@ -59,6 +54,31 @@ def dashboard():
     realizando = Chamado.query.filter_by(
         status='em_realizacao'
     ).order_by(Chamado.atribuido_em.asc()).all()
+
+    corte = datetime.now() - timedelta(hours=12)
+    finalizado = Chamado.query.filter(
+        Chamado.status == 'finalizado',
+        Chamado.finalizado_em >= corte,
+    ).order_by(Chamado.finalizado_em.desc()).all()
+
+    return render_template('area_colab/dashboard.html',
+        active='chamados',
+        em_aberto=em_aberto,
+        realizando=realizando,
+        finalizado=finalizado,
+    )
+
+
+@colab_bp.route('/historico')
+@colab_required
+def historico():
+    from datetime import timedelta
+
+    f_empresa = request.args.get('empresa_id', type=int)
+    f_tipo    = request.args.get('tipo', '')
+    f_colab   = request.args.get('colaborador', '')
+    f_de      = request.args.get('de', '')
+    f_ate     = request.args.get('ate', '')
 
     q = Chamado.query.filter_by(status='finalizado')
     if f_empresa:
@@ -74,17 +94,14 @@ def dashboard():
             pass
     if f_ate:
         try:
-            from datetime import timedelta
             q = q.filter(Chamado.finalizado_em <= datetime.strptime(f_ate, '%Y-%m-%d') + timedelta(days=1))
         except ValueError:
             pass
-    finalizado = q.order_by(Chamado.finalizado_em.desc()).all()
+    chamados = q.order_by(Chamado.finalizado_em.desc()).all()
 
-    return render_template('area_colab/dashboard.html',
-        active='chamados',
-        em_aberto=em_aberto,
-        realizando=realizando,
-        finalizado=finalizado,
+    return render_template('area_colab/historico.html',
+        active='historico',
+        chamados=chamados,
         empresas_filtro=_empresas_clientes(),
         f_empresa=f_empresa, f_tipo=f_tipo, f_colab=f_colab, f_de=f_de, f_ate=f_ate,
     )
