@@ -99,8 +99,57 @@ def trocar_senha():
     return render_template('auth/trocar_senha.html')
 
 
+@auth_bp.route('/alterar-senha', methods=['GET', 'POST'])
+@login_required
+def alterar_senha():
+    if request.method == 'POST':
+        atual = request.form.get('senha_atual', '')
+        nova = request.form.get('nova_senha', '')
+        confirma = request.form.get('confirma_senha', '')
+
+        if not current_user.check_password(atual):
+            flash('Senha atual incorreta.', 'erro')
+        elif len(nova) < 8:
+            flash('A nova senha deve ter pelo menos 8 caracteres.', 'erro')
+        elif nova != confirma:
+            flash('As senhas não coincidem.', 'erro')
+        else:
+            current_user.set_password(nova)
+            current_user.senha_temporaria = False
+            db.session.commit()
+            flash('Senha alterada com sucesso.', 'sucesso')
+            return _redirect_by_role(current_user)
+
+    return render_template('auth/alterar_senha.html')
+
+
 @auth_bp.route('/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('auth.login'))
+
+
+@auth_bp.route('/setup-inicial/<token>')
+def setup_inicial(token):
+    import os
+    from werkzeug.security import generate_password_hash
+    if token != os.environ.get('SETUP_TOKEN', ''):
+        return 'Token inválido.', 403
+    if Empresa.query.filter_by(cnpj='00.000.000/0001-00').first():
+        return 'Setup já realizado.', 200
+    emp = Empresa(cnpj='00.000.000/0001-00', razao_social='Barros e Barros', ativo=True)
+    db.session.add(emp)
+    db.session.flush()
+    u = Usuario(
+        nome='Admin',
+        email='barroscontabil@gmail.com',
+        senha_hash=generate_password_hash('Teste@123'),
+        role='admin',
+        ativo=True,
+        senha_temporaria=False,
+        empresa_id=emp.id,
+    )
+    db.session.add(u)
+    db.session.commit()
+    return 'Admin criado com sucesso. Acesse /auth/login com CNPJ 00.000.000/0001-00 e senha Teste@123', 200

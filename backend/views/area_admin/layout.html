@@ -296,6 +296,11 @@
         <div class="s-name">{{ current_user.nome }}</div>
         <div class="s-role">Administrador</div>
       </div>
+      <a href="{{ url_for('auth.alterar_senha') }}" class="logout-btn" title="Alterar senha">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+        </svg>
+      </a>
       <a href="{{ url_for('auth.logout') }}" class="logout-btn" title="Sair">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>Alterar Senha — Barros &amp; Barros</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --navy: #1B2D6B; --navy-deep: #111e4a; --gold: #C9A227; --white: #fff; --text: #1a2340; --muted: #6b7280; --border: #e5e7eb; }
+    html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: linear-gradient(135deg, var(--navy-deep), var(--navy)); }
+    .wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .card { background: #fff; border-radius: 16px; padding: 44px 40px; width: 100%; max-width: 420px; box-shadow: 0 24px 60px rgba(0,0,0,0.25); }
+    .lock-icon { width: 52px; height: 52px; border-radius: 14px; background: rgba(27,45,107,0.08); display: flex; align-items: center; justify-content: center; margin-bottom: 20px; color: var(--navy); }
+    h2 { font-size: 1.3rem; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
+    p.sub { font-size: 0.82rem; color: var(--muted); margin-bottom: 28px; line-height: 1.55; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 0.8rem; font-weight: 500; margin-bottom: 6px; }
+    input[type=password] { width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; outline: none; transition: border-color 0.15s; }
+    input[type=password]:focus { border-color: var(--navy); }
+    .hint { font-size: 0.72rem; color: var(--muted); margin-top: 5px; }
+    .btn { width: 100%; padding: 13px; background: var(--navy); color: #fff; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 600; cursor: pointer; margin-top: 8px; }
+    .btn:hover { background: #2a3f8f; }
+    .btn-voltar { display: block; text-align: center; margin-top: 16px; font-size: 0.8rem; color: var(--muted); text-decoration: none; }
+    .btn-voltar:hover { color: var(--navy); }
+    .alert { padding: 12px 14px; border-radius: 8px; margin-bottom: 18px; font-size: 0.82rem; }
+    .alert-erro    { background: rgba(220,38,38,0.08); color: #b91c1c; border: 1px solid rgba(220,38,38,0.18); }
+    .alert-sucesso { background: rgba(22,163,74,0.08); color: #15803d; border: 1px solid rgba(22,163,74,0.18); }
+    @media (max-width: 480px) { .card { padding: 32px 24px; } }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="lock-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0110 0v4"/>
+      </svg>
+    </div>
+    <h2>Alterar senha</h2>
+    <p class="sub">Digite sua senha atual e escolha uma nova senha.</p>
+
+    {% with messages = get_flashed_messages(with_categories=True) %}
+      {% for cat, msg in messages %}
+        <div class="alert alert-{{ cat }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group">
+        <label>Senha atual</label>
+        <input type="password" name="senha_atual" placeholder="Sua senha atual" required autofocus>
+      </div>
+      <div class="form-group">
+        <label>Nova senha</label>
+        <input type="password" name="nova_senha" placeholder="Mínimo 8 caracteres" required>
+        <div class="hint">Use letras, números e caracteres especiais.</div>
+      </div>
+      <div class="form-group">
+        <label>Confirmar nova senha</label>
+        <input type="password" name="confirma_senha" placeholder="Repita a nova senha" required>
+      </div>
+      <button type="submit" class="btn">Salvar nova senha</button>
+    </form>
+    <a href="javascript:history.back()" class="btn-voltar">← Voltar</a>
+  </div>
+</div>
+</body>
+</html>
