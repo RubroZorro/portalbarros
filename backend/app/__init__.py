@@ -1,10 +1,12 @@
 import os
-from flask import Flask, redirect, url_for
-from app.config import DevConfig
-from app.extensions import db, login_manager
+from flask import Flask, redirect, url_for, flash, render_template
+from app.config import DevConfig, ProdConfig
+from app.extensions import db, login_manager, limiter, csrf
 
 
-def create_app(config=DevConfig):
+def create_app():
+    env = os.environ.get('FLASK_ENV', 'development')
+    config = ProdConfig if env == 'production' else DevConfig
     app = Flask(__name__, template_folder='../views')
     app.config.from_object(config)
 
@@ -16,6 +18,13 @@ def create_app(config=DevConfig):
 
     db.init_app(app)
     login_manager.init_app(app)
+    limiter.init_app(app)
+    csrf.init_app(app)
+
+    @app.errorhandler(429)
+    def ratelimit_handler(e):
+        flash('Muitas tentativas de acesso. Aguarde alguns minutos e tente novamente.', 'erro')
+        return render_template('auth/login.html'), 429
 
     from app.blueprints.auth import auth_bp
     from app.blueprints.area_cliente import cliente_bp
@@ -26,6 +35,10 @@ def create_app(config=DevConfig):
     app.register_blueprint(cliente_bp, url_prefix='/cliente')
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(colab_bp, url_prefix='/colab')
+
+    # garante criação de todas as tabelas ao iniciar (necessário com Gunicorn em prod)
+    with app.app_context():
+        db.create_all()
 
     @app.route('/')
     def index():

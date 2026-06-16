@@ -3,8 +3,119 @@
 {% block title %}Meus Chamados{% endblock %}
 {% block topbar_title %}Meus Chamados{% endblock %}
 
+{% block head %}
+<style>
+  .chamados-table {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    overflow: hidden;
+  }
+
+  /* ── CABEÇALHO (desktop) ── */
+  .ct-head {
+    display: grid;
+    grid-template-columns: 72px 1fr 130px 110px 100px;
+    padding: 10px 18px;
+    background: var(--off);
+    border-bottom: 1px solid var(--border);
+    font-size: 0.68rem; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
+  }
+
+  /* ── LINHA DESKTOP ── */
+  .ct-row {
+    display: grid;
+    grid-template-columns: 72px 1fr 130px 110px 100px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none; color: inherit;
+    align-items: center;
+    transition: background 0.12s;
+  }
+  .ct-row:last-child { border-bottom: none; }
+  .ct-row:hover { background: #f8f9ff; }
+
+  .ct-num    { font-size: 0.78rem; font-weight: 600; color: var(--muted); }
+  .ct-titulo { font-size: 0.875rem; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 12px; }
+  .ct-tipo   { font-size: 0.78rem; color: var(--muted); }
+  .ct-data   { font-size: 0.78rem; color: var(--muted); }
+
+  /* card mobile oculto no desktop */
+  .ct-card { display: none; }
+
+  /* ── MOBILE ≤ 600px — vira card ── */
+  @media (max-width: 600px) {
+    .ct-head { display: none; }
+
+    /* esconde todas as células de grid */
+    .ct-row {
+      display: block;
+      padding: 14px 16px;
+    }
+    .ct-row > .ct-num,
+    .ct-row > .ct-titulo,
+    .ct-row > .ct-tipo,
+    .ct-row > .ct-status-col,
+    .ct-row > .ct-data { display: none; }
+
+    /* exibe o card */
+    .ct-card {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .ct-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .ct-card-top .ct-num {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    .ct-card-title {
+      font-size: 0.93rem;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.35;
+    }
+
+    .ct-card-bottom {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 2px;
+    }
+    .ct-card-bottom .ct-tipo {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+    .ct-card-bottom .ct-data {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-left: auto;
+    }
+  }
+
+  /* vazio */
+  .empty-state { padding: 48px 24px; text-align: center; color: var(--muted); }
+  .empty-state svg { width: 40px; height: 40px; margin-bottom: 12px; opacity: 0.35; }
+  .empty-state p { font-size: 0.875rem; }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="page-header" style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+<div class="page-header" style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
   <div>
     <h1>Meus Chamados</h1>
     <p>Histórico de todas as suas solicitações.</p>
@@ -26,17 +137,34 @@
     <span>Status</span>
     <span>Aberto em</span>
   </div>
+
   {% for ch in chamados %}
-  <a class="ct-row" href="{{ url_for('area_cliente.chamado_detalhe', id=ch.id) }}"
-     style="text-decoration:none;color:inherit;display:grid;grid-template-columns:60px 1fr 130px 110px 100px;">
+  <a class="ct-row" href="{{ url_for('area_cliente.chamado_detalhe', id=ch.id) }}">
+
+    {# células desktop #}
     <span class="ct-num">{{ ch.numero }}</span>
     <span class="ct-titulo">{{ ch.titulo }}</span>
     <span class="ct-tipo">{{ ch.tipo_label }}</span>
-    <span><span class="status {{ ch.status_css }}">{{ ch.status_label }}</span></span>
+    <span class="ct-status-col"><span class="status {{ ch.status_css }}">{{ ch.status_label }}</span></span>
     <span class="ct-data">{{ ch.data_formatada }}</span>
+
+    {# card mobile #}
+    <div class="ct-card">
+      <div class="ct-card-top">
+        <span class="ct-num">{{ ch.numero }}</span>
+        <span class="status {{ ch.status_css }}">{{ ch.status_label }}</span>
+      </div>
+      <span class="ct-card-title">{{ ch.titulo }}</span>
+      <div class="ct-card-bottom">
+        <span class="ct-tipo">{{ ch.tipo_label }}</span>
+        <span class="ct-data">{{ ch.data_formatada }}</span>
+      </div>
+    </div>
+
   </a>
   {% endfor %}
 </div>
+
 {% else %}
 <div class="chamados-table">
   <div class="empty-state">

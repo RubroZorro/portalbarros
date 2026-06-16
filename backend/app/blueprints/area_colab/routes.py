@@ -2,7 +2,7 @@ import os
 import uuid
 from datetime import datetime
 from flask import (Blueprint, render_template, redirect, url_for,
-                   request, flash, current_app, abort, send_file)
+                   request, flash, current_app, abort)
 from flask_login import login_required, current_user
 from functools import wraps
 from werkzeug.utils import secure_filename
@@ -14,6 +14,7 @@ from app.models.anexo_chamado import AnexoChamado, TIPOS_PERMITIDOS, TAMANHO_MAX
 from app.models.historico_chamado import HistoricoChamado
 from app.models.empresa import Empresa
 from app.utils.historico import registrar as reg_historico
+from app.utils import storage
 
 colab_bp = Blueprint('area_colab', __name__)
 
@@ -207,16 +208,14 @@ def upload_anexo(id):
         flash('Arquivo muito grande. Máximo: 10 MB.', 'erro')
         return redirect(url_for('area_colab.chamado_detalhe', id=id))
 
-    pasta = os.path.join(current_app.config['UPLOAD_FOLDER'], str(chamado.id))
-    os.makedirs(pasta, exist_ok=True)
     nome_salvo = f'{uuid.uuid4().hex}{ext}'
-    caminho = os.path.join(pasta, nome_salvo)
-    arquivo.save(caminho)
+    key = f'chamados/{chamado.id}/{nome_salvo}'
+    storage.save(arquivo.read(), key)
 
     db.session.add(AnexoChamado(
         chamado_id=chamado.id,
         nome_original=nome_original,
-        caminho_arquivo=caminho,
+        caminho_arquivo=key,
         tamanho_bytes=tamanho,
         enviado_por_id=current_user.id,
     ))
@@ -233,12 +232,11 @@ def download_anexo(chamado_id, anexo_id):
     anexo = AnexoChamado.query.get_or_404(anexo_id)
     if anexo.chamado_id != chamado_id:
         abort(404)
-    if not os.path.exists(anexo.caminho_arquivo):
+    resp = storage.serve(anexo.caminho_arquivo, anexo.nome_original)
+    if resp is None:
         flash('Arquivo não encontrado no servidor.', 'erro')
         return redirect(url_for('area_colab.chamado_detalhe', id=chamado_id))
-    return send_file(anexo.caminho_arquivo,
-                     download_name=anexo.nome_original,
-                     as_attachment=True)
+    return resp
 
 
 # ── COMUNICADOS ─────────────────────────────────────────────────────────────

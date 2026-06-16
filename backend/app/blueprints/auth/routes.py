@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_user, logout_user, login_required, current_user
 from app.models.empresa import Empresa
 from app.models.usuario import Usuario
-from app.extensions import db
+from app.extensions import db, limiter
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -48,6 +48,7 @@ def _autenticar_por_cnpj(cnpj_raw, digitos, senha):
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
+@limiter.limit('10 per minute; 30 per hour')
 def login():
     if current_user.is_authenticated:
         return _redirect_by_role(current_user)

@@ -1,10 +1,11 @@
 import os
-from flask import Blueprint, render_template, redirect, url_for, request, flash, abort, send_file
+from flask import Blueprint, render_template, redirect, url_for, request, flash, abort
 from flask_login import login_required, current_user
 from app.models.chamado import Chamado
 from app.models.comunicado import Comunicado, ComunicadoLeitura
 from app.models.anexo_chamado import AnexoChamado
 from app.extensions import db
+from app.utils import storage
 from datetime import datetime
 from functools import wraps
 
@@ -136,13 +137,11 @@ def download_anexo(chamado_id, anexo_id):
     anexo = AnexoChamado.query.get_or_404(anexo_id)
     if anexo.chamado_id != chamado_id:
         abort(404)
-    if not os.path.exists(anexo.caminho_arquivo):
+    resp = storage.serve(anexo.caminho_arquivo, anexo.nome_original)
+    if resp is None:
         flash('Arquivo não encontrado no servidor.', 'erro')
         return redirect(url_for('area_cliente.chamado_detalhe', id=chamado_id))
-
-    return send_file(anexo.caminho_arquivo,
-                     download_name=anexo.nome_original,
-                     as_attachment=True)
+    return resp
 
 
 @cliente_bp.route('/boletos')
@@ -170,16 +169,15 @@ def download_boleto(id):
     boleto = Boleto.query.get_or_404(id)
     if boleto.empresa_id != current_user.empresa_id:
         abort(403)
-    if not os.path.exists(boleto.caminho_arquivo):
-        flash('Arquivo não encontrado no servidor.', 'erro')
-        return redirect(url_for('area_cliente.boletos'))
     if boleto.status == 'pendente':
         boleto.status = 'recebido'
         boleto.recebido_em = datetime.now()
         db.session.commit()
-    return send_file(boleto.caminho_arquivo,
-                     download_name=boleto.nome_original,
-                     as_attachment=True)
+    resp = storage.serve(boleto.caminho_arquivo, boleto.nome_original)
+    if resp is None:
+        flash('Arquivo não encontrado no servidor.', 'erro')
+        return redirect(url_for('area_cliente.boletos'))
+    return resp
 
 
 @cliente_bp.route('/recibos')
@@ -206,16 +204,15 @@ def download_recibo(id):
     recibo = Recibo.query.get_or_404(id)
     if recibo.empresa_id != current_user.empresa_id:
         abort(403)
-    if not os.path.exists(recibo.caminho_arquivo):
-        flash('Arquivo não encontrado no servidor.', 'erro')
-        return redirect(url_for('area_cliente.recibos'))
     if recibo.status == 'pendente':
         recibo.status = 'recebido'
         recibo.recebido_em = datetime.now()
         db.session.commit()
-    return send_file(recibo.caminho_arquivo,
-                     download_name=recibo.nome_original,
-                     as_attachment=True)
+    resp = storage.serve(recibo.caminho_arquivo, recibo.nome_original)
+    if resp is None:
+        flash('Arquivo não encontrado no servidor.', 'erro')
+        return redirect(url_for('area_cliente.recibos'))
+    return resp
 
 
 @cliente_bp.route('/chamados/abrir', methods=['GET', 'POST'])

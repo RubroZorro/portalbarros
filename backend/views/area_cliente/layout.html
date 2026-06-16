@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>{% block title %}Portal do Cliente{% endblock %} — Barros &amp; Barros</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -584,5 +585,18 @@
   window.addEventListener('resize', () => { if (window.innerWidth > 768) closeSidebar(); });
 </script>
 {% block scripts %}{% endblock %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var token = document.querySelector('meta[name="csrf-token"]');
+    if (!token) return;
+    document.querySelectorAll('form').forEach(function (f) {
+      if (f.method.toLowerCase() === 'post' && !f.querySelector('[name="csrf_token"]')) {
+        var inp = document.createElement('input');
+        inp.type = 'hidden'; inp.name = 'csrf_token'; inp.value = token.content;
+        f.appendChild(inp);
+      }
+    });
+  });
+</script>
 </body>
 </html>

@@ -6,7 +6,8 @@ from datetime import datetime, timedelta
 from functools import wraps
 
 from flask import (Blueprint, render_template, redirect, url_for,
-                   request, flash, abort, send_file, current_app)
+                   request, flash, abort, current_app)
+from app.utils import storage
 from flask_login import login_required, current_user
 
 from app.extensions import db
@@ -39,7 +40,7 @@ def _gerar_senha_temp():
 
 
 def _upload_financeiro(pasta):
-    """Salva arquivo PDF do request; retorna (caminho, nome_original, tamanho) ou None."""
+    """Salva arquivo PDF do request; retorna (key, nome_original, tamanho) ou None."""
     arquivo = request.files.get('arquivo')
     if not arquivo or arquivo.filename == '':
         flash('Selecione um arquivo PDF.', 'erro')
@@ -53,13 +54,9 @@ def _upload_financeiro(pasta):
         flash('Arquivo excede o limite de 10 MB.', 'erro')
         return None
     empresa_id = request.form.get('empresa_id', '')
-    base_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], pasta, str(empresa_id))
-    os.makedirs(base_dir, exist_ok=True)
-    nome_arquivo = f'{uuid.uuid4().hex}.pdf'
-    caminho = os.path.join(base_dir, nome_arquivo)
-    with open(caminho, 'wb') as f:
-        f.write(dados)
-    return caminho, arquivo.filename, len(dados)
+    key = f'{pasta}/{empresa_id}/{uuid.uuid4().hex}.pdf'
+    storage.save(dados, key)
+    return key, arquivo.filename, len(dados)
 
 
 # ──────────────────────────────────────────────
@@ -442,8 +439,7 @@ def boleto_upload():
 @admin_required
 def boleto_excluir(id):
     boleto = Boleto.query.get_or_404(id)
-    if os.path.exists(boleto.caminho_arquivo):
-        os.remove(boleto.caminho_arquivo)
+    storage.delete(boleto.caminho_arquivo)
     db.session.delete(boleto)
     db.session.commit()
     flash('Boleto excluído.', 'sucesso')
@@ -515,8 +511,7 @@ def recibo_upload():
 @admin_required
 def recibo_excluir(id):
     recibo = Recibo.query.get_or_404(id)
-    if os.path.exists(recibo.caminho_arquivo):
-        os.remove(recibo.caminho_arquivo)
+    storage.delete(recibo.caminho_arquivo)
     db.session.delete(recibo)
     db.session.commit()
     flash('Recibo excluído.', 'sucesso')

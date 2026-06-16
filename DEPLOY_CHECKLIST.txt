@@ -1,0 +1,93 @@
+DEPLOY — portal.barrosebarroscontabilidade.com.br
+=================================================
+
+ARQUITETURA
+-----------
+- Hospedagem Flask : Render.com (gratis)
+- Banco de dados   : Supabase - PostgreSQL (gratis, São Paulo)
+- Arquivos/uploads : Cloudflare R2 (gratis ate 10GB)
+- Subdominio/HTTPS : Cloudflare (ja tem)
+
+
+ALTERACOES DE CODIGO (Claude faz)
+----------------------------------
+[ ] backend/requirements.txt — adicionar gunicorn, psycopg2-binary, boto3
+[ ] backend/app/config.py    — banco e uploads via variaveis de ambiente
+[ ] backend/app/config.py    — corrigir prefixo postgres:// → postgresql://
+[ ] backend/render.yaml      — arquivo de configuracao do Render
+
+
+ETAPA 1 — SUPABASE (banco de dados)
+-------------------------------------
+[ ] Criar conta em supabase.com
+[ ] New Project → nome: barros-portal
+[ ] Regiao: South America (Sao Paulo)
+[ ] Definir senha forte para o banco
+[ ] Aguardar criacao (~2 min)
+[ ] Ir em Settings → Database → Connection String → URI
+[ ] Copiar a string postgresql://postgres:[SENHA]@db.xxxx.supabase.co:5432/postgres
+[ ] Guardar essa string para usar no Render
+
+
+ETAPA 2 — CLOUDFLARE R2 (arquivos dos chamados)
+-------------------------------------------------
+[ ] No painel Cloudflare → R2 Object Storage → Create Bucket
+[ ] Nome do bucket: portal-beb-uploads
+[ ] Ir em R2 → Manage R2 API Tokens → Create API Token
+[ ] Permissao: Object Read & Write
+[ ] Bucket: portal-beb-uploads
+[ ] Guardar: Access Key ID, Secret Access Key, Endpoint URL
+
+
+ETAPA 3 — RENDER.COM (hospedagem)
+-----------------------------------
+[ ] Criar conta em render.com
+[ ] New → Blueprint → conectar repositorio GitHub do Portal_BeB
+[ ] Render le o render.yaml e cria servico + banco automaticamente
+[ ] Adicionar variaveis de ambiente:
+    DATABASE_URL  → string copiada do Supabase
+    R2_BUCKET     → portal-beb-uploads
+    R2_ENDPOINT   → endpoint copiado do R2
+    R2_ACCESS_KEY → chave de acesso R2
+    R2_SECRET_KEY → chave secreta R2
+[ ] Clicar Deploy (primeiro build ~3 min)
+[ ] Anotar a URL gerada: portal-beb.onrender.com
+
+
+ETAPA 4 — SUBDOMAIN NO CLOUDFLARE
+------------------------------------
+[ ] Cloudflare → DNS → Add Record:
+    Tipo    : CNAME
+    Nome    : portal
+    Conteudo: portal-beb.onrender.com
+    Proxy   : Ligado (nuvem laranja)
+[ ] Render → Settings → Custom Domains → Add
+    → digitar: portal.barrosebarroscontabilidade.com.br
+
+
+ETAPA 5 — TESTES POS-DEPLOY
+-----------------------------
+[ ] Abrir portal.barrosebarroscontabilidade.com.br
+[ ] Testar login cliente com credenciais de logins_teste.txt
+[ ] Testar login colaborador/admin
+[ ] Abrir um chamado de teste
+[ ] Enviar um arquivo anexo
+[ ] Verificar comunicados
+
+
+SEGURANCA — POS-DEPLOY (segunda rodada)
+-----------------------------------------
+[ ] Adicionar Flask-Limiter (bloquear forca bruta no login)
+[ ] Adicionar Flask-WTF (protecao CSRF nos formularios)
+[ ] Configurar timezone America/Recife
+[ ] Revogar/trocar credenciais de teste de logins_teste.txt
+
+
+VARIAVEIS DE AMBIENTE NECESSARIAS (resumo)
+-------------------------------------------
+SECRET_KEY    → gerado automaticamente pelo Render
+DATABASE_URL  → vem do Supabase
+R2_BUCKET     → portal-beb-uploads
+R2_ENDPOINT   → vem do Cloudflare R2
+R2_ACCESS_KEY → vem do Cloudflare R2
+R2_SECRET_KEY → vem do Cloudflare R2
