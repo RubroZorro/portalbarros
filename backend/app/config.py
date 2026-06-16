@@ -7,6 +7,7 @@ class Config:
     # Render entrega postgres:// mas SQLAlchemy exige postgresql://
     SQLALCHEMY_DATABASE_URI = _db_url.replace('postgres://', 'postgresql://', 1)
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {'pool_pre_ping': True, 'pool_recycle': 280}
 
     R2_BUCKET     = os.environ.get('R2_BUCKET')
     R2_ENDPOINT   = os.environ.get('R2_ENDPOINT')
