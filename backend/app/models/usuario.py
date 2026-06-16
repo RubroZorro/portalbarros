@@ -16,6 +16,7 @@ class Usuario(UserMixin, db.Model):
     empresa_id = db.Column(db.Integer, db.ForeignKey('empresas.id'), nullable=True)
     ativo = db.Column(db.Boolean, default=True)
     senha_temporaria = db.Column(db.Boolean, default=True)
+    senha_temp_texto = db.Column(db.String(50), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     chamados_abertos = db.relationship(

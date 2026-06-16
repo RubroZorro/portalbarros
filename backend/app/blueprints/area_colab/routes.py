@@ -346,10 +346,22 @@ def criar_chamado_interno():
     if request.method == 'POST':
         tipo = request.form.get('tipo', '').strip()
         descricao = request.form.get('descricao', '').strip() or None
-        empresa_id_val = request.form.get('empresa_id', type=int)
+        empresa_id_raw = request.form.get('empresa_id', '').strip()
         data_limite_str = request.form.get('data_limite', '').strip()
         nome_funcionario = None
         tipo_certidao = None
+        outro_solicitante = None
+
+        if empresa_id_raw == 'outro':
+            outro_solicitante = request.form.get('outro_solicitante', '').strip()
+            if not outro_solicitante:
+                flash('Descreva quem ou o que solicitou.', 'erro')
+                return render_template('area_colab/criar_chamado_interno.html',
+                                       active='criar_chamado_interno', empresas=empresas)
+            escritorio = Empresa.query.filter_by(cnpj='00.000.000/0001-00').first()
+            empresa_id_val = escritorio.id if escritorio else None
+        else:
+            empresa_id_val = int(empresa_id_raw) if empresa_id_raw.isdigit() else None
 
         if not empresa_id_val:
             flash('Selecione a empresa que solicitou.', 'erro')
@@ -384,6 +396,13 @@ def criar_chamado_interno():
             titulo = f'Solicitação de Certidão {tipo_certidao}'
         elif tipo == 'notas_fiscais':
             titulo = 'Envio de Notas Fiscais'
+        elif tipo == 'outro':
+            titulo_livre = request.form.get('titulo_livre', '').strip()
+            if not titulo_livre:
+                flash('Descreva a solicitação.', 'erro')
+                return render_template('area_colab/criar_chamado_interno.html',
+                                       active='criar_chamado_interno', empresas=empresas)
+            titulo = titulo_livre
         else:
             flash('Selecione o tipo de solicitação.', 'erro')
             return render_template('area_colab/criar_chamado_interno.html',
@@ -400,6 +419,7 @@ def criar_chamado_interno():
             prazo_limite=prazo,
             empresa_id=empresa_id_val,
             usuario_id=current_user.id,
+            outro_solicitante=outro_solicitante,
         )
         db.session.add(chamado)
         db.session.flush()

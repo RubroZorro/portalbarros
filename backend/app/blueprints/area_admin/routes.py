@@ -255,27 +255,33 @@ def usuario_novo():
             flash('Já existe um usuário com esse e-mail.', 'erro')
             return redirect(url_for('area_admin.usuario_novo'))
 
-        cpf = request.form.get('cpf', '').strip() or None
-
-        if role in ('operador', 'admin'):
+        if role == 'cliente':
+            cnpj_emp = request.form.get('cpf', '').strip()
+            razao    = request.form.get('razao_social', '').strip()
+            if not cnpj_emp or not razao:
+                flash('Informe o CNPJ e a razão social da empresa cliente.', 'erro')
+                return redirect(url_for('area_admin.usuario_novo'))
+            empresa = Empresa.query.filter_by(cnpj=cnpj_emp).first()
+            if not empresa:
+                empresa = Empresa(cnpj=cnpj_emp, razao_social=razao, ativo=True)
+                db.session.add(empresa)
+                db.session.flush()
+            empresa_id = empresa.id
+            cpf = None
+        else:
+            cpf = request.form.get('cpf', '').strip() or None
             if not cpf:
-                flash('CPF é obrigatório para operadores e administradores.', 'erro')
+                flash('CPF é obrigatório para colaboradores e administradores.', 'erro')
                 return redirect(url_for('area_admin.usuario_novo'))
             if Usuario.query.filter_by(cpf=cpf).first():
                 flash('Já existe um usuário com esse CPF.', 'erro')
                 return redirect(url_for('area_admin.usuario_novo'))
-
-        if role == 'cliente':
-            empresa_id = request.form.get('empresa_id', type=int)
-            if not empresa_id:
-                flash('Selecione a empresa do cliente.', 'erro')
-                return redirect(url_for('area_admin.usuario_novo'))
-        else:
             empresa_id = escritorio.id if escritorio else None
 
         senha = _gerar_senha_temp()
         u = Usuario(nome=nome, email=email, role=role, cpf=cpf,
-                    empresa_id=empresa_id, ativo=True, senha_temporaria=True)
+                    empresa_id=empresa_id, ativo=True, senha_temporaria=True,
+                    senha_temp_texto=senha)
         u.set_password(senha)
         db.session.add(u)
         db.session.commit()
@@ -312,24 +318,30 @@ def usuario_editar(id):
             flash('Já existe outro usuário com esse e-mail.', 'erro')
             return redirect(url_for('area_admin.usuario_editar', id=id))
 
-        cpf = request.form.get('cpf', '').strip() or None
         escritorio = Empresa.query.filter_by(cnpj='00.000.000/0001-00').first()
 
-        if role in ('operador', 'admin'):
+        if role == 'cliente':
+            cnpj_emp = request.form.get('cpf', '').strip()
+            razao    = request.form.get('razao_social', '').strip()
+            if not cnpj_emp or not razao:
+                flash('Informe o CNPJ e a razão social da empresa cliente.', 'erro')
+                return redirect(url_for('area_admin.usuario_editar', id=id))
+            empresa = Empresa.query.filter_by(cnpj=cnpj_emp).first()
+            if not empresa:
+                empresa = Empresa(cnpj=cnpj_emp, razao_social=razao, ativo=True)
+                db.session.add(empresa)
+                db.session.flush()
+            empresa_id = empresa.id
+            cpf = None
+        else:
+            cpf = request.form.get('cpf', '').strip() or None
             if not cpf:
-                flash('CPF é obrigatório para operadores e administradores.', 'erro')
+                flash('CPF é obrigatório para colaboradores e administradores.', 'erro')
                 return redirect(url_for('area_admin.usuario_editar', id=id))
             conflito_cpf = Usuario.query.filter(Usuario.cpf == cpf, Usuario.id != id).first()
             if conflito_cpf:
                 flash('Já existe outro usuário com esse CPF.', 'erro')
                 return redirect(url_for('area_admin.usuario_editar', id=id))
-
-        if role == 'cliente':
-            empresa_id = request.form.get('empresa_id', type=int)
-            if not empresa_id:
-                flash('Selecione a empresa do cliente.', 'erro')
-                return redirect(url_for('area_admin.usuario_editar', id=id))
-        else:
             empresa_id = escritorio.id if escritorio else usuario.empresa_id
 
         usuario.nome = nome
@@ -369,6 +381,7 @@ def usuario_reset_senha(id):
     senha = _gerar_senha_temp()
     usuario.set_password(senha)
     usuario.senha_temporaria = True
+    usuario.senha_temp_texto = senha
     db.session.commit()
     flash(f'Senha redefinida. Nova senha temporária: {senha}', 'sucesso')
     return redirect(url_for('area_admin.usuarios'))

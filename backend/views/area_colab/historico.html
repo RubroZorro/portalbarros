@@ -147,7 +147,7 @@
     <span class="ht-num">{{ ch.numero }}</span>
     <span class="ht-titulo" title="{{ ch.titulo }}">{{ ch.titulo }}</span>
     <span><span class="tipo-badge tb-{{ ch.tipo }}">{{ ch.tipo_label }}</span></span>
-    <span class="ht-empresa" title="{{ ch.empresa.razao_social }}">{{ ch.empresa.razao_social }}</span>
+    <span class="ht-empresa" title="{{ ch.outro_solicitante or ch.empresa.razao_social }}">{{ ch.outro_solicitante or ch.empresa.razao_social }}</span>
     <span class="ht-colab">
       {% if ch.finalizado_por_nome %}{{ ch.finalizado_por_nome }}{% endif %}
       {% if ch.finalizado_em %}<br><span style="font-size:0.7rem;color:var(--soft);">{{ ch.finalizado_em.strftime('%d/%m/%Y %H:%M') }}</span>{% endif %}

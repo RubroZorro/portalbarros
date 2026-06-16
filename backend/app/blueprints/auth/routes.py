@@ -92,6 +92,7 @@ def trocar_senha():
         else:
             current_user.set_password(nova)
             current_user.senha_temporaria = False
+            current_user.senha_temp_texto = None
             db.session.commit()
             flash('Senha definida com sucesso. Bem-vindo ao portal!', 'sucesso')
             return _redirect_by_role(current_user)
@@ -116,6 +117,7 @@ def alterar_senha():
         else:
             current_user.set_password(nova)
             current_user.senha_temporaria = False
+            current_user.senha_temp_texto = None
             db.session.commit()
             flash('Senha alterada com sucesso.', 'sucesso')
             return _redirect_by_role(current_user)

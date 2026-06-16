@@ -39,6 +39,17 @@ def create_app():
     # garante criação de todas as tabelas ao iniciar (necessário com Gunicorn em prod)
     with app.app_context():
         db.create_all()
+        # migração incremental: adiciona coluna se ainda não existir
+        with db.engine.connect() as _conn:
+            for stmt in [
+                'ALTER TABLE usuarios ADD COLUMN senha_temp_texto VARCHAR(50)',
+                'ALTER TABLE chamados ADD COLUMN outro_solicitante VARCHAR(200)',
+            ]:
+                try:
+                    _conn.execute(db.text(stmt))
+                    _conn.commit()
+                except Exception:
+                    pass
 
     @app.route('/')
     def index():

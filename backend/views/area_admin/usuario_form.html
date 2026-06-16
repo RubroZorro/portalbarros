@@ -6,7 +6,7 @@
 <div class="page-header">
   <div>
     <h1>{% if usuario %}Editar Usuário{% else %}Novo Usuário{% endif %}</h1>
-    <p>{% if usuario %}Atualize os dados do usuário.{% else %}Um e-mail com senha temporária deve ser enviado ao usuário após o cadastro.{% endif %}</p>
+    <p>{% if usuario %}Atualize os dados do usuário.{% else %}Informe os dados e o perfil do novo usuário.{% endif %}</p>
   </div>
 </div>
 
@@ -27,40 +27,34 @@
       </div>
     </div>
 
-    <div class="field-group" id="cpf-field">
-      <label class="field-label">CPF <span class="req" id="cpf-req" style="display:none;">*</span></label>
-      <input type="text" name="cpf" id="cpf-input" class="form-control"
-             value="{{ usuario.cpf if usuario and usuario.cpf else '' }}"
-             placeholder="000.000.000-00" maxlength="14">
-      <p style="font-size:0.75rem;color:var(--muted);margin-top:6px;" id="cpf-hint">
-        Obrigatório para operadores e administradores — usado como login individual.
-      </p>
-    </div>
-
     <div class="field-group">
       <label class="field-label">Perfil <span class="req">*</span></label>
-      <select name="role" id="role-select" class="form-control" onchange="toggleEmpresaField(this.value)" required>
+      <select name="role" id="role-select" class="form-control" required>
         <option value="">Selecione...</option>
+        <option value="operador" {% if usuario and usuario.role == 'operador' %}selected{% endif %}>Colaborador</option>
         <option value="cliente"  {% if usuario and usuario.role == 'cliente'  %}selected{% endif %}>Cliente</option>
-        <option value="operador" {% if usuario and usuario.role == 'operador' %}selected{% endif %}>Operador</option>
         <option value="admin"    {% if usuario and usuario.role == 'admin'    %}selected{% endif %}>Administrador</option>
       </select>
     </div>
 
-    <div class="field-group" id="empresa-field"
+    <div class="field-group">
+      <label class="field-label">CPF ou CNPJ <span class="req">*</span></label>
+      <input type="text" name="cpf" id="doc-input" class="form-control"
+             value="{% if usuario %}{% if usuario.role == 'cliente' %}{{ usuario.empresa.cnpj if usuario.empresa else '' }}{% else %}{{ usuario.cpf or '' }}{% endif %}{% endif %}"
+             placeholder="000.000.000-00 ou 00.000.000/0000-00" maxlength="18">
+      <p style="font-size:0.75rem;color:var(--muted);margin-top:6px;" id="doc-hint">
+        Colaboradores e administradores: CPF. Clientes: CNPJ da empresa.
+      </p>
+    </div>
+
+    <div class="field-group" id="razao-field"
          style="{% if not usuario or usuario.role != 'cliente' %}display:none;{% endif %}">
-      <label class="field-label">Empresa <span class="req">*</span></label>
-      <select name="empresa_id" class="form-control">
-        <option value="">Selecione a empresa...</option>
-        {% for emp in empresas %}
-        <option value="{{ emp.id }}"
-          {% if usuario and usuario.role == 'cliente' and usuario.empresa_id == emp.id %}selected{% endif %}>
-          {{ emp.razao_social }}
-        </option>
-        {% endfor %}
-      </select>
+      <label class="field-label">Razão Social da Empresa <span class="req">*</span></label>
+      <input type="text" name="razao_social" id="razao-input" class="form-control"
+             value="{{ usuario.empresa.razao_social if usuario and usuario.empresa else '' }}"
+             placeholder="Nome da empresa cliente">
       <p style="font-size:0.75rem;color:var(--muted);margin-top:6px;">
-        Operadores e administradores são vinculados ao escritório automaticamente.
+        Se o CNPJ já estiver cadastrado, a empresa existente será vinculada automaticamente.
       </p>
     </div>
 
@@ -77,17 +71,24 @@
 {% block scripts %}
 <script>
   function toggleFields(role) {
-    document.getElementById('empresa-field').style.display = (role === 'cliente') ? '' : 'none';
-    const cpfReq = document.getElementById('cpf-req');
-    const cpfInput = document.getElementById('cpf-input');
-    if (role === 'operador' || role === 'admin') {
-      cpfReq.style.display = '';
-      cpfInput.required = true;
+    const razaoField = document.getElementById('razao-field');
+    const razaoInput = document.getElementById('razao-input');
+    const docInput   = document.getElementById('doc-input');
+    const docHint    = document.getElementById('doc-hint');
+
+    if (role === 'cliente') {
+      razaoField.style.display = '';
+      razaoInput.required = true;
+      docInput.placeholder = '00.000.000/0000-00';
+      docHint.textContent  = 'CNPJ da empresa cliente.';
     } else {
-      cpfReq.style.display = 'none';
-      cpfInput.required = false;
+      razaoField.style.display = 'none';
+      razaoInput.required = false;
+      docInput.placeholder = '000.000.000-00';
+      docHint.textContent  = 'CPF do colaborador — usado como identificação individual.';
     }
   }
+
   const sel = document.getElementById('role-select');
   if (sel.value) toggleFields(sel.value);
   sel.addEventListener('change', () => toggleFields(sel.value));

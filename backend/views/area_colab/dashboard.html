@@ -42,7 +42,7 @@
           <div class="devolvido-tag">↩ Devolvido por {{ ch.devolvido_por_nome }}</div>
         {% endif %}
         <div class="ch-title">{{ ch.titulo }}</div>
-        <div class="ch-empresa">{{ ch.empresa.razao_social }}</div>
+        <div class="ch-empresa">{{ ch.outro_solicitante or ch.empresa.razao_social }}</div>
         <div class="ch-meta">
           {% if ch.prazo_formatado %}
           <span class="ch-meta-item ch-meta-prazo {{ ch.semaforo }}">
@@ -93,7 +93,7 @@
           {% endif %}
         </div>
         <div class="ch-title">{{ ch.titulo }}</div>
-        <div class="ch-empresa">{{ ch.empresa.razao_social }}</div>
+        <div class="ch-empresa">{{ ch.outro_solicitante or ch.empresa.razao_social }}</div>
         <div class="ch-meta">
           {% if ch.prazo_formatado %}
           <span class="ch-meta-item ch-meta-prazo {{ ch.semaforo }}">
@@ -143,7 +143,7 @@
           <span class="tipo-badge tb-{{ ch.tipo }}">{{ ch.tipo_label }}</span>
         </div>
         <div class="ch-title">{{ ch.titulo }}</div>
-        <div class="ch-empresa">{{ ch.empresa.razao_social }}</div>
+        <div class="ch-empresa">{{ ch.outro_solicitante or ch.empresa.razao_social }}</div>
         {% if ch.finalizado_por_nome %}
         <div class="ch-fin-info">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>

@@ -5,6 +5,7 @@ TIPO_LABELS = {
     'rescisao':      'Rescisão',
     'certidao':      'Certidão',
     'notas_fiscais': 'Notas Fiscais',
+    'outro':         'Outro',
 }
 
 # Visão do cliente
@@ -47,6 +48,7 @@ class Chamado(db.Model):
     atribuido_a = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=True)
     atribuido_em = db.Column(db.DateTime)
     prazo_limite = db.Column(db.DateTime)
+    outro_solicitante = db.Column(db.String(200), nullable=True)
     devolvido_por_nome = db.Column(db.String(100))
     finalizado_por_nome = db.Column(db.String(100))
     finalizado_em = db.Column(db.DateTime)

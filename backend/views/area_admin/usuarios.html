@@ -49,7 +49,28 @@
           <td style="font-weight:500;">
             {{ u.nome }}
             {% if u.senha_temporaria %}
-              <span class="badge b-pendente" style="margin-left:5px;font-size:0.6rem;">senha temp.</span>
+              <button type="button"
+                      class="badge b-pendente"
+                      style="margin-left:5px;font-size:0.6rem;border:none;cursor:pointer;"
+                      onclick="toggleSenha({{ u.id }})"
+                      title="Clique para ver a senha temporária">
+                senha temp. ▾
+              </button>
+              {% if u.senha_temp_texto %}
+              <span id="st-{{ u.id }}"
+                    style="display:none;margin-left:6px;font-size:0.75rem;
+                           background:#fef9e7;border:1px solid #d4a800;border-radius:5px;
+                           padding:3px 10px;font-family:monospace;color:#7a4f00;
+                           white-space:nowrap;">
+                {{ u.senha_temp_texto }}
+                <button type="button" id="cp-{{ u.id }}"
+                        onclick="copiarSenha('{{ u.senha_temp_texto }}', {{ u.id }})"
+                        style="background:none;border:none;cursor:pointer;margin-left:4px;
+                               font-size:0.7rem;color:#7a4f00;text-decoration:underline;">
+                  copiar
+                </button>
+              </span>
+              {% endif %}
             {% endif %}
           </td>
           <td style="color:var(--muted);font-size:0.8rem;">{{ u.email }}</td>
@@ -90,4 +111,19 @@
     </table>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function toggleSenha(id) {
+    const el = document.getElementById('st-' + id);
+    if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
+  }
+  function copiarSenha(texto, id) {
+    navigator.clipboard.writeText(texto).then(function() {
+      const btn = document.getElementById('cp-' + id);
+      if (btn) { btn.textContent = 'copiado!'; setTimeout(() => btn.textContent = 'copiar', 2000); }
+    });
+  }
+</script>
 {% endblock %}

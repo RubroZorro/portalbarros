@@ -244,6 +244,13 @@ def abrir_chamado():
         elif tipo == 'notas_fiscais':
             titulo = 'Envio de Notas Fiscais'
 
+        elif tipo == 'outro':
+            titulo_livre = request.form.get('titulo_livre', '').strip()
+            if not titulo_livre:
+                flash('Descreva a solicitação.', 'erro')
+                return redirect(url_for('area_cliente.abrir_chamado'))
+            titulo = titulo_livre
+
         else:
             flash('Selecione o tipo de solicitação.', 'erro')
             return redirect(url_for('area_cliente.abrir_chamado'))

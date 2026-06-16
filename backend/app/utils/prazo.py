@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta
 
 PRAZOS_DIAS = {
-    'rescisao':     1,
-    'certidao':     1,
+    'rescisao':      1,
+    'certidao':      1,
     'notas_fiscais': 3,
+    'outro':         3,
 }
 
 _HORA_INICIO = 8

@@ -75,6 +75,21 @@
         </div>
       </label>
 
+      <label class="tipo-label">
+        <input type="radio" name="tipo" value="outro" required>
+        <div class="tipo-inner">
+          <div class="tipo-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+          <strong>Outro</strong>
+          <span>Solicitação não prevista acima</span>
+        </div>
+      </label>
+
     </div>
 
     <!-- Campo extra: rescisão -->
@@ -103,15 +118,32 @@
       </div>
     </div>
 
+    <!-- Campo extra: outro tipo -->
+    <div id="campo-tipo-outro" class="extra-field" style="display:none;">
+      <label class="field-label" for="titulo_livre">Descreva a solicitação <span class="req">*</span></label>
+      <input type="text" id="titulo_livre" name="titulo_livre" class="form-control"
+             placeholder="Ex: Organizar papelada, consulta fiscal, orientação tributária…">
+    </div>
+
     <!-- Empresa que solicitou -->
     <div class="extra-field">
       <label class="field-label" for="empresa_id">Empresa que solicitou <span class="req">*</span></label>
-      <select id="empresa_id" name="empresa_id" class="form-control" required>
+      <select id="empresa_id" name="empresa_id" class="form-control" required
+              onchange="toggleOutro(this.value)">
         <option value="">Selecione a empresa…</option>
         {% for emp in empresas %}
           <option value="{{ emp.id }}">{{ emp.razao_social }}</option>
         {% endfor %}
+        <option value="outro">— Outro / Interno —</option>
       </select>
+    </div>
+
+    <!-- Expansão: solicitante livre -->
+    <div id="campo-outro" class="extra-field" style="display:none;">
+      <label class="field-label" for="outro_solicitante">Quem ou o que solicitou <span class="req">*</span></label>
+      <input type="text" id="outro_solicitante" name="outro_solicitante" class="form-control"
+             placeholder="Ex: Organizar papelada, reunião interna, demanda do sócio…">
+      <p class="field-hint">Será registrado no chamado como origem da solicitação.</p>
     </div>
 
     <!-- Data limite (diferencial do chamado interno) -->
@@ -142,23 +174,38 @@
 {% block scripts %}
 <script>
   const radios = document.querySelectorAll('input[name="tipo"]');
-  const campoRescisao = document.getElementById('campo-rescisao');
-  const campoCertidao = document.getElementById('campo-certidao');
+  const campoRescisao  = document.getElementById('campo-rescisao');
+  const campoCertidao  = document.getElementById('campo-certidao');
+  const campoOutroTipo = document.getElementById('campo-tipo-outro');
   const nomeFuncionario = document.getElementById('nome_funcionario');
+  const tituloLivre    = document.getElementById('titulo_livre');
 
   radios.forEach(radio => {
     radio.addEventListener('change', function () {
-      campoRescisao.style.display = 'none';
-      campoCertidao.style.display = 'none';
+      campoRescisao.style.display  = 'none';
+      campoCertidao.style.display  = 'none';
+      campoOutroTipo.style.display = 'none';
       nomeFuncionario.required = false;
+      tituloLivre.required     = false;
 
       if (this.value === 'rescisao') {
         campoRescisao.style.display = 'block';
         nomeFuncionario.required = true;
       } else if (this.value === 'certidao') {
         campoCertidao.style.display = 'block';
+      } else if (this.value === 'outro') {
+        campoOutroTipo.style.display = 'block';
+        tituloLivre.required = true;
       }
     });
   });
+
+  function toggleOutro(val) {
+    const campo = document.getElementById('campo-outro');
+    const input = document.getElementById('outro_solicitante');
+    const mostrar = val === 'outro';
+    campo.style.display = mostrar ? 'block' : 'none';
+    input.required = mostrar;
+  }
 </script>
 {% endblock %}
