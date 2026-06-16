@@ -7,6 +7,8 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn -w 2 -b 0.0.0.0:$PORT "app:create_app()"
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
       - key: FLASK_ENV
         value: production
       - key: SECRET_KEY
