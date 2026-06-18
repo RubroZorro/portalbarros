@@ -39,16 +39,19 @@ def save(data: bytes, key: str) -> str:
 
 
 def delete(key: str) -> None:
-    """Remove arquivo do storage."""
-    if _use_r2():
-        _client().delete_object(
-            Bucket=current_app.config['R2_BUCKET'],
-            Key=key,
-        )
-    else:
-        path = os.path.join(current_app.config['UPLOAD_FOLDER'], key)
-        if os.path.exists(path):
-            os.remove(path)
+    """Remove arquivo do storage. Erros são ignorados para não bloquear o fluxo."""
+    try:
+        if _use_r2():
+            _client().delete_object(
+                Bucket=current_app.config['R2_BUCKET'],
+                Key=key,
+            )
+        else:
+            path = os.path.join(current_app.config['UPLOAD_FOLDER'], key)
+            if os.path.exists(path):
+                os.remove(path)
+    except Exception as e:
+        current_app.logger.warning(f'storage.delete falhou para {key!r}: {e}')
 
 
 def serve(key: str, filename: str):
