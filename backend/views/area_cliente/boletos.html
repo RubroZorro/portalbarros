@@ -80,15 +80,16 @@
             <div class="dl-nome">{{ b.nome_original }}</div>
             <div class="dl-meta" style="display:flex;align-items:center;gap:6px;">
               {{ b.tamanho_str }}
-              <span class="status-dot dot-{{ b.status }}"></span>
+              <span class="status-dot dot-{{ b.status }}" id="dot-{{ b.id }}"></span>
               {% if b.status == 'recebido' %}
-                <span style="color:#15803d;font-weight:500;">Recebido {{ b.recebido_em.strftime('%d/%m/%Y') }}</span>
+                <span id="status-{{ b.id }}" style="color:#15803d;font-weight:500;">Baixado {{ b.recebido_em.strftime('%d/%m/%Y') }}</span>
               {% else %}
-                <span>Pendente</span>
+                <span id="status-{{ b.id }}">Pendente</span>
               {% endif %}
             </div>
           </div>
-          <a href="{{ url_for('area_cliente.download_boleto', id=b.id) }}" class="btn-baixar">
+          <a href="{{ url_for('area_cliente.download_boleto', id=b.id) }}" class="btn-baixar"
+             onclick="marcarBaixado({{ b.id }})">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="display:inline;vertical-align:middle;margin-right:4px;">
               <polyline points="8 17 12 21 16 17"/>
               <line x1="12" y1="12" x2="12" y2="21"/>
@@ -118,6 +119,13 @@
 <script>
   function toggleAcc(id) {
     document.getElementById(id).classList.toggle('open');
+  }
+
+  function marcarBaixado(id) {
+    var dot = document.getElementById('dot-' + id);
+    var sp  = document.getElementById('status-' + id);
+    if (dot) { dot.className = 'status-dot dot-recebido'; }
+    if (sp)  { sp.textContent = 'Baixado'; sp.style.color = '#15803d'; sp.style.fontWeight = '500'; }
   }
 </script>
 {% endblock %}

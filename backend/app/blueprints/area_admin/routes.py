@@ -17,6 +17,7 @@ from app.models.chamado import Chamado
 from app.models.historico_chamado import HistoricoChamado
 from app.models.boleto import Boleto
 from app.models.recibo import Recibo
+from app.models.comunicado import Comunicado
 
 admin_bp = Blueprint('area_admin', __name__)
 
@@ -446,6 +447,118 @@ def boleto_upload():
     db.session.commit()
     flash('Boleto enviado com sucesso.', 'sucesso')
     return redirect(url_for('area_admin.boletos'))
+
+
+@admin_bp.route('/boletos/lote', methods=['POST'])
+@admin_required
+def boleto_lote():
+    import re
+    from io import BytesIO
+
+    mes = request.form.get('mes', type=int)
+    ano = request.form.get('ano', type=int)
+    arquivos = request.files.getlist('arquivos')
+
+    if not mes or not ano or not any(a.filename for a in arquivos):
+        flash('Preencha mês, ano e selecione ao menos um arquivo.', 'erro')
+        return redirect(url_for('area_admin.boletos'))
+    if not (1 <= mes <= 12):
+        flash('Mês inválido.', 'erro')
+        return redirect(url_for('area_admin.boletos'))
+
+    try:
+        import pdfplumber
+    except ImportError:
+        flash('pdfplumber não instalado. Execute: pip install pdfplumber', 'erro')
+        return redirect(url_for('area_admin.boletos'))
+
+    CNPJ_RE = re.compile(r'CNPJ/CPF:\s*(\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})')
+    CNPJ_ESCRITORIO = '03.997.535/0001-77'
+
+    enviados, sem_cadastro, com_erro = [], [], []
+    empresas_notificar = {}  # empresa_id → razao_social
+
+    for arq in arquivos:
+        if not arq or not arq.filename:
+            continue
+        if not arq.filename.lower().endswith('.pdf'):
+            com_erro.append({'nome': arq.filename, 'motivo': 'Não é PDF'})
+            continue
+
+        data = arq.read()
+
+        try:
+            with pdfplumber.open(BytesIO(data)) as pdf:
+                texto = '\n'.join(p.extract_text() or '' for p in pdf.pages)
+            cnpjs = CNPJ_RE.findall(texto)
+            cnpj = next((c for c in cnpjs if c != CNPJ_ESCRITORIO), None)
+        except Exception:
+            com_erro.append({'nome': arq.filename, 'motivo': 'Erro ao ler PDF'})
+            continue
+
+        if not cnpj:
+            com_erro.append({'nome': arq.filename, 'motivo': 'CNPJ não encontrado no PDF'})
+            continue
+
+        empresa = Empresa.query.filter_by(cnpj=cnpj).first()
+        if not empresa:
+            sem_cadastro.append({'nome': arq.filename, 'cnpj': cnpj})
+            continue
+
+        nome_dest = f'{ano}{mes:02d}_{uuid.uuid4().hex[:8]}_{arq.filename}'
+        key = f'boletos/{empresa.id}/{nome_dest}'
+        storage.save(data, key)
+
+        existente = Boleto.query.filter_by(
+            empresa_id=empresa.id, competencia_mes=mes, competencia_ano=ano
+        ).first()
+        if existente:
+            storage.delete(existente.caminho_arquivo)
+            existente.nome_original = arq.filename
+            existente.caminho_arquivo = key
+            existente.tamanho_bytes = len(data)
+            existente.enviado_em = datetime.now()
+            existente.enviado_por_id = current_user.id
+            existente.status = 'pendente'
+            existente.recebido_em = None
+            acao = 'atualizado'
+        else:
+            db.session.add(Boleto(
+                empresa_id=empresa.id,
+                competencia_mes=mes,
+                competencia_ano=ano,
+                nome_original=arq.filename,
+                caminho_arquivo=key,
+                tamanho_bytes=len(data),
+                enviado_por_id=current_user.id,
+            ))
+            acao = 'inserido'
+
+        empresas_notificar[empresa.id] = empresa.razao_social
+        enviados.append({'empresa': empresa.razao_social, 'nome': arq.filename, 'acao': acao})
+
+    mes_nome = MESES_NOMES[mes - 1]
+    for empresa_id in empresas_notificar:
+        db.session.add(Comunicado(
+            titulo=f'Boleto de {mes_nome} {ano} disponível',
+            conteudo=(
+                f'Seu boleto referente à competência de {mes_nome} de {ano} '
+                'está disponível para download na seção Boletos do portal.'
+            ),
+            para_todos=False,
+            empresa_id=empresa_id,
+        ))
+
+    db.session.commit()
+
+    return render_template('area_admin/boletos_lote_resultado.html',
+        active='boletos',
+        mes_nome=mes_nome,
+        ano=ano,
+        enviados=enviados,
+        sem_cadastro=sem_cadastro,
+        com_erro=com_erro,
+    )
 
 
 @admin_bp.route('/boletos/<int:id>/excluir', methods=['POST'])

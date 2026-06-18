@@ -1,6 +1,6 @@
 ================================================================================
   BARROS & BARROS — LOGINS DE TESTE (AMBIENTE LOCAL)
-  Gerado em: 09/06/2026
+  Atualizado em: 17/06/2026
   ATENÇÃO: Não usar em produção. Trocar todas as senhas antes do deploy.
 ================================================================================
 
@@ -9,10 +9,36 @@
   ──────────────
   URL:   http://localhost:5000
   Banco: SQLite (backend/instance/barros.db)
-  Para iniciar: cd cliente/backend && python run.py
+  Para iniciar: cd backend && python run.py
 
   IMPORTANTE: Se adicionar novos modelos/colunas ao banco, apague
   backend/instance/barros.db antes de reiniciar o servidor.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ÁREA DO ADMIN
+  Acesso: http://localhost:5000/auth/login → redireciona para /admin/dashboard
+  Login:  CPF + Senha
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Admin Barros
+  ├── CPF:   111.111.111-11
+  ├── Senha: BeB@Admin26
+  ├── Role:  admin
+  └── Email: admin@barros.com
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ÁREA DO COLABORADOR
+  Acesso: http://localhost:5000/auth/login → redireciona para /colab/dashboard
+  Login:  CPF + Senha
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  João Operador
+  ├── CPF:   222.222.222-22
+  ├── Senha: BeB@Colab26
+  ├── Role:  operador
+  └── Email: joao@barros.com
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -23,65 +49,25 @@
 
   Empresa Teste Ltda
   ├── CNPJ:  12.345.678/0001-90
-  ├── Senha: Teste@123
+  ├── Senha: BeB@Cli26
   ├── Nome:  Maria Silva
   └── Email: maria@empresa.com
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  ÁREA DO COLABORADOR
-  Acesso: http://localhost:5000/auth/login → redireciona para /colab/dashboard
-  Login:  CPF individual + Senha
+  CLIENTES DE TESTE (via _seed_empresas.py — criados manualmente)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  João Operador
-  ├── CPF:   222.222.222-22
-  ├── Senha: Oper@123
-  ├── Role:  operador
-  └── Email: joao@barros.com
-
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  ÁREA DO ADMIN
-  Acesso: http://localhost:5000/auth/login → redireciona para /admin/dashboard
-  Login:  CPF individual + Senha
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  Admin Barros
-  ├── CPF:   111.111.111-11
-  ├── Senha: Admin@123
-  ├── Role:  admin
-  └── Email: admin@barros.com
-
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  DADOS DE TESTE PRÉ-CARREGADOS (seed automático na 1ª execução)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  Comunicados (4, visíveis para todos):
-    - Declaração de IR 2026 — Prazo Final
-    - Guia DASN-SIMEI — Junho 2026
-    - Recesso de Corpus Christi
-    - Atualização no regime tributário
-
-  Chamados (4):
-    #0001  Envio de Notas Fiscais          → Status: Em Atendimento (João Operador)
-    #0002  Solicitação de Certidão A       → Status: Pendente
-    #0003  Cálculo de Rescisão — João Costa → Status: Finalizado (por João Operador)
-    #0004  Solicitação de Certidão B       → Status: Devolvido (por João Operador)
-
-  Upload de arquivos:
-    - Pasta: backend/uploads/<chamado_id>/
-    - Máximo: 10 MB por arquivo
-    - Tipos: pdf, docx, xlsx, png, jpg, jpeg, zip
+  Rodar: python _seed_empresas.py   (pasta C:\dev\python\barros_e_barros)
+  Login: CNPJ da empresa + senha gerada e exibida no terminal
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   COMO RESETAR O BANCO DE DADOS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  1. Parar o servidor (Ctrl+C)
-  2. Deletar o arquivo: cliente/backend/instance/barros.db
+  1. Parar o servidor (Ctrl+C na janela do servidor)
+  2. Deletar: backend/instance/barros.db
   3. Rodar novamente: python run.py
      (o banco será recriado e populado automaticamente)
 
