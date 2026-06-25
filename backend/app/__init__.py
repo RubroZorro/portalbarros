@@ -38,6 +38,7 @@ def create_app():
 
     # garante criação de todas as tabelas ao iniciar (necessário com Gunicorn em prod)
     with app.app_context():
+        from app.models import documento  # noqa: F401 — garante registro do modelo
         db.create_all()
         # migração incremental: adiciona coluna se ainda não existir
         with db.engine.connect() as _conn:

@@ -62,9 +62,15 @@ def serve(key: str, filename: str):
     Retorna None se o arquivo não existir (apenas em dev).
     """
     if _use_r2():
+        import urllib.parse
+        disposition = f"attachment; filename*=UTF-8''{urllib.parse.quote(filename)}"
         url = _client().generate_presigned_url(
             'get_object',
-            Params={'Bucket': current_app.config['R2_BUCKET'], 'Key': key},
+            Params={
+                'Bucket': current_app.config['R2_BUCKET'],
+                'Key': key,
+                'ResponseContentDisposition': disposition,
+            },
             ExpiresIn=300,
         )
         return redirect(url)

@@ -1,0 +1,152 @@
+{% extends 'area_admin/layout.html' %}
+{% block title %}Resultado — Envio em Lote{% endblock %}
+{% block topbar_title %}Documentos — Resultado do Envio em Lote{% endblock %}
+
+{% block head %}
+<style>
+  .res-card { background: white; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 1px 4px rgba(0,0,0,0.05); margin-bottom: 18px; overflow: hidden; }
+  .res-head { display: flex; align-items: center; gap: 10px; padding: 14px 20px; font-size: 0.88rem; font-weight: 600; border-bottom: 1px solid var(--border); }
+  .res-body { padding: 0; }
+  .res-row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 20px; border-bottom: 1px solid var(--border); font-size: 0.83rem; }
+  .res-row:last-child { border-bottom: none; }
+  .res-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+  .dot-ok   { background: #15803d; }
+  .dot-warn { background: #b45309; }
+  .dot-err  { background: #dc2626; }
+  .dot-skip { background: #7c3aed; }
+  .res-empresa { font-weight: 500; color: var(--text); min-width: 200px; }
+  .res-files { color: var(--muted); flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  .res-file { font-size: 0.79rem; }
+  .res-tag { font-size: 0.72rem; padding: 2px 8px; border-radius: 20px; font-weight: 500; white-space: nowrap; }
+  .tag-inserido   { background: #dcfce7; color: #166534; }
+  .tag-pulado     { background: #ede9fe; color: #5b21b6; }
+  .res-empty { padding: 18px 20px; font-size: 0.83rem; color: var(--muted); font-style: italic; }
+  .summary-bar { display: flex; gap: 14px; margin-bottom: 22px; flex-wrap: wrap; }
+  .sum-box { flex: 1; min-width: 130px; background: white; border-radius: 10px; border: 1px solid var(--border); padding: 14px 18px; display: flex; align-items: center; gap: 12px; }
+  .sum-num { font-size: 1.6rem; font-weight: 700; line-height: 1; }
+  .sum-ok   { color: #15803d; }
+  .sum-skip { color: #7c3aed; }
+  .sum-warn { color: #b45309; }
+  .sum-err  { color: #dc2626; }
+  .sum-label { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Resultado — {{ mes_nome }} {{ ano }}</h1>
+    <p>Log do envio em lote de documentos.</p>
+  </div>
+  <a href="{{ url_for('area_admin.documentos') }}" class="btn btn-ghost">← Voltar para Documentos</a>
+</div>
+
+<!-- Sumário -->
+<div class="summary-bar">
+  <div class="sum-box">
+    <div class="sum-num sum-ok">{{ enviados|length }}</div>
+    <div class="sum-label">Empresas enviadas<br>com sucesso</div>
+  </div>
+  <div class="sum-box">
+    <div class="sum-num sum-skip">{{ pulados|length }}</div>
+    <div class="sum-label">Pulados<br>(já existiam)</div>
+  </div>
+  <div class="sum-box">
+    <div class="sum-num sum-warn">{{ sem_cadastro|length }}</div>
+    <div class="sum-label">Empresa não<br>cadastrada</div>
+  </div>
+  <div class="sum-box">
+    <div class="sum-num sum-err">{{ com_erro|length }}</div>
+    <div class="sum-label">Erro de<br>envio</div>
+  </div>
+</div>
+
+<!-- Enviados -->
+<div class="res-card">
+  <div class="res-head">
+    <span class="res-dot dot-ok" style="margin-top:0;"></span>
+    Enviados com sucesso
+    {% if enviados %}<span style="font-size:0.75rem;font-weight:400;color:var(--muted);margin-left:4px;">(comunicado disparado automaticamente)</span>{% endif %}
+  </div>
+  <div class="res-body">
+    {% for item in enviados %}
+    <div class="res-row">
+      <span class="res-empresa">{{ item.empresa }}</span>
+      <span class="res-files">
+        {% for arq in item.arquivos %}
+        <span class="res-file">{{ arq }}</span>
+        {% endfor %}
+      </span>
+      <span class="res-tag tag-inserido">{{ item.arquivos|length }} arquivo{{ 's' if item.arquivos|length != 1 }}</span>
+    </div>
+    {% else %}
+    <div class="res-empty">Nenhum documento enviado.</div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Pulados (competência já existe) -->
+{% if pulados %}
+<div class="res-card">
+  <div class="res-head">
+    <span class="res-dot dot-skip" style="margin-top:0;"></span>
+    Pulados — competência já existente
+    <span style="font-size:0.75rem;font-weight:400;color:var(--muted);margin-left:4px;">(empresa já possui documentos nesta competência; exclua antes para reenviar)</span>
+  </div>
+  <div class="res-body">
+    {% for item in pulados %}
+    <div class="res-row">
+      <span class="res-empresa">{{ item.empresa }}</span>
+      <span class="res-files">
+        {% for arq in item.arquivos %}
+        <span class="res-file">{{ arq }}</span>
+        {% endfor %}
+      </span>
+      <span class="res-tag tag-pulado">pulado</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Sem cadastro -->
+{% if sem_cadastro %}
+<div class="res-card">
+  <div class="res-head">
+    <span class="res-dot dot-warn" style="margin-top:0;"></span>
+    Empresa não cadastrada no portal
+    <span style="font-size:0.75rem;font-weight:400;color:var(--muted);margin-left:4px;">(pasta não corresponde a nenhuma empresa ativa)</span>
+  </div>
+  <div class="res-body">
+    {% for item in sem_cadastro %}
+    <div class="res-row">
+      <span class="res-empresa" style="color:var(--muted);">{{ item.pasta }}</span>
+      <span class="res-files">
+        {% for arq in item.arquivos %}
+        <span class="res-file">{{ arq }}</span>
+        {% endfor %}
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Erros -->
+{% if com_erro %}
+<div class="res-card">
+  <div class="res-head">
+    <span class="res-dot dot-err" style="margin-top:0;"></span>
+    Erros de envio
+  </div>
+  <div class="res-body">
+    {% for item in com_erro %}
+    <div class="res-row">
+      <span class="res-empresa" style="color:var(--muted);">{{ item.nome }}</span>
+      <span style="font-size:0.75rem;color:#dc2626;white-space:nowrap;">{{ item.motivo }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

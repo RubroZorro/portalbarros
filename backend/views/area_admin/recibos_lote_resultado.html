@@ -1,0 +1,113 @@
+{% extends 'area_admin/layout.html' %}
+{% block title %}Resultado — Envio em Lote{% endblock %}
+{% block topbar_title %}Recibos — Resultado do Envio em Lote{% endblock %}
+
+{% block head %}
+<style>
+  .res-card { background: white; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 1px 4px rgba(0,0,0,0.05); margin-bottom: 18px; overflow: hidden; }
+  .res-head { display: flex; align-items: center; gap: 10px; padding: 14px 20px; font-size: 0.88rem; font-weight: 600; border-bottom: 1px solid var(--border); }
+  .res-body { padding: 0; }
+  .res-row { display: flex; align-items: center; gap: 12px; padding: 10px 20px; border-bottom: 1px solid var(--border); font-size: 0.83rem; }
+  .res-row:last-child { border-bottom: none; }
+  .res-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot-ok   { background: #15803d; }
+  .dot-warn { background: #b45309; }
+  .dot-err  { background: #dc2626; }
+  .res-empresa { font-weight: 500; color: var(--text); min-width: 200px; }
+  .res-file { color: var(--muted); flex: 1; }
+  .res-tag { font-size: 0.72rem; padding: 2px 8px; border-radius: 20px; font-weight: 500; white-space: nowrap; }
+  .tag-inserido   { background: #dcfce7; color: #166534; }
+  .tag-atualizado { background: #fef3c7; color: #92400e; }
+  .res-empty { padding: 18px 20px; font-size: 0.83rem; color: var(--muted); font-style: italic; }
+  .summary-bar { display: flex; gap: 14px; margin-bottom: 22px; flex-wrap: wrap; }
+  .sum-box { flex: 1; min-width: 140px; background: white; border-radius: 10px; border: 1px solid var(--border); padding: 14px 18px; display: flex; align-items: center; gap: 12px; }
+  .sum-num { font-size: 1.6rem; font-weight: 700; line-height: 1; }
+  .sum-ok   { color: #15803d; }
+  .sum-warn { color: #b45309; }
+  .sum-err  { color: #dc2626; }
+  .sum-label { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Resultado — {{ mes_nome }} {{ ano }}</h1>
+    <p>Log do envio em lote de recibos.</p>
+  </div>
+  <a href="{{ url_for('area_admin.recibos') }}" class="btn btn-ghost">← Voltar para Recibos</a>
+</div>
+
+<!-- Sumário -->
+<div class="summary-bar">
+  <div class="sum-box">
+    <div class="sum-num sum-ok">{{ enviados|length }}</div>
+    <div class="sum-label">Enviados com<br>sucesso</div>
+  </div>
+  <div class="sum-box">
+    <div class="sum-num sum-warn">{{ sem_cadastro|length }}</div>
+    <div class="sum-label">CNPJ não<br>cadastrado</div>
+  </div>
+  <div class="sum-box">
+    <div class="sum-num sum-err">{{ com_erro|length }}</div>
+    <div class="sum-label">Erro de<br>leitura</div>
+  </div>
+</div>
+
+<!-- Enviados -->
+<div class="res-card">
+  <div class="res-head">
+    <span class="res-dot dot-ok"></span>
+    Enviados com sucesso
+    {% if enviados %}<span style="font-size:0.75rem;font-weight:400;color:var(--muted);margin-left:4px;">(comunicado disparado automaticamente)</span>{% endif %}
+  </div>
+  <div class="res-body">
+    {% for item in enviados %}
+    <div class="res-row">
+      <span class="res-empresa">{{ item.empresa }}</span>
+      <span class="res-file">{{ item.nome }}</span>
+      <span class="res-tag tag-{{ item.acao }}">{{ item.acao }}</span>
+    </div>
+    {% else %}
+    <div class="res-empty">Nenhum recibo enviado.</div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Sem cadastro -->
+{% if sem_cadastro %}
+<div class="res-card">
+  <div class="res-head">
+    <span class="res-dot dot-warn"></span>
+    CNPJ não cadastrado no portal
+    <span style="font-size:0.75rem;font-weight:400;color:var(--muted);margin-left:4px;">(empresa precisa ser criada antes do envio)</span>
+  </div>
+  <div class="res-body">
+    {% for item in sem_cadastro %}
+    <div class="res-row">
+      <span class="res-empresa" style="font-family:monospace;font-size:0.82rem;">{{ item.cnpj }}</span>
+      <span class="res-file">{{ item.nome }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Erros -->
+{% if com_erro %}
+<div class="res-card">
+  <div class="res-head">
+    <span class="res-dot dot-err"></span>
+    Erros de leitura
+  </div>
+  <div class="res-body">
+    {% for item in com_erro %}
+    <div class="res-row">
+      <span class="res-file">{{ item.nome }}</span>
+      <span style="font-size:0.75rem;color:#dc2626;">{{ item.motivo }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

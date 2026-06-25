@@ -215,6 +215,41 @@ def download_recibo(id):
     return resp
 
 
+@cliente_bp.route('/documentos')
+@cliente_required
+def documentos():
+    from app.models.documento import Documento
+    lista = Documento.query.filter_by(
+        empresa_id=current_user.empresa_id
+    ).order_by(Documento.competencia_ano.desc(), Documento.competencia_mes.desc(), Documento.enviado_em.desc()).all()
+    grupos = {}
+    for d in lista:
+        chave = (d.competencia_ano, d.competencia_mes, d.competencia_label)
+        grupos.setdefault(chave, []).append(d)
+    return render_template('area_cliente/documentos.html',
+        active='documentos',
+        grupos=grupos,
+    )
+
+
+@cliente_bp.route('/documentos/<int:id>/download')
+@cliente_required
+def download_documento(id):
+    from app.models.documento import Documento
+    doc = Documento.query.get_or_404(id)
+    if doc.empresa_id != current_user.empresa_id:
+        abort(403)
+    if doc.status == 'pendente':
+        doc.status = 'recebido'
+        doc.recebido_em = datetime.now()
+        db.session.commit()
+    resp = storage.serve(doc.caminho_arquivo, doc.nome_original)
+    if resp is None:
+        flash('Arquivo não encontrado no servidor.', 'erro')
+        return redirect(url_for('area_cliente.documentos'))
+    return resp
+
+
 @cliente_bp.route('/chamados/abrir', methods=['GET', 'POST'])
 @cliente_required
 def abrir_chamado():

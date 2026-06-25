@@ -1,6 +1,6 @@
 {% extends 'area_admin/layout.html' %}
-{% block title %}Recibos{% endblock %}
-{% block topbar_title %}Recibos{% endblock %}
+{% block title %}Documentos{% endblock %}
+{% block topbar_title %}Documentos{% endblock %}
 
 {% block head %}
 <style>
@@ -12,7 +12,7 @@
   .upload-file-label:hover { border-color: var(--navy); color: var(--navy); }
   .upload-file-label svg { width: 16px; height: 16px; flex-shrink: 0; }
   .filter-bar { display: flex; gap: 10px; align-items: center; margin-bottom: 18px; flex-wrap: wrap; }
-  .lote-grid { display: grid; grid-template-columns: 150px 100px 1fr auto; gap: 10px; align-items: end; }
+  .lote-grid { display: grid; grid-template-columns: 160px 100px 1fr auto; gap: 10px; align-items: end; }
   .lote-file-label { display: flex; align-items: center; gap: 8px; padding: 10px 13px; border: 1.5px dashed var(--navy); border-radius: 8px; cursor: pointer; transition: background 0.15s; font-size: 0.84rem; color: var(--navy); background: rgba(27,45,107,0.04); }
   .lote-file-label:hover { background: rgba(27,45,107,0.09); }
   .lote-file-label svg { width: 16px; height: 16px; flex-shrink: 0; }
@@ -27,21 +27,21 @@
 {% block content %}
 <div class="page-header">
   <div>
-    <h1>Recibos</h1>
-    <p>Gerencie recibos disponíveis para download pelos clientes.</p>
+    <h1>Documentos</h1>
+    <p>Envie documentos por empresa e competência.</p>
   </div>
 </div>
 
 <!-- Upload card com abas -->
 <div class="upload-card">
   <div class="tab-btns">
-    <button class="tab-btn active" onclick="switchTab('unitario')">Enviar recibo</button>
+    <button class="tab-btn active" onclick="switchTab('unitario')">Enviar documento</button>
     <button class="tab-btn" onclick="switchTab('lote')">Enviar em lote</button>
   </div>
 
-  <!-- Aba: unitário -->
+  <!-- Aba: unitário (múltiplos arquivos, mesma empresa/competência) -->
   <div id="tab-unitario" class="tab-pane active">
-    <form method="POST" action="{{ url_for('area_admin.recibo_upload') }}" enctype="multipart/form-data">
+    <form method="POST" action="{{ url_for('area_admin.documento_upload') }}" enctype="multipart/form-data">
       <div class="upload-row">
         <div>
           <label class="field-label">Empresa <span class="req">*</span></label>
@@ -65,16 +65,16 @@
           <input type="number" name="ano" class="form-control" value="{{ ano_atual }}" min="2020" max="2099" required>
         </div>
         <div>
-          <label class="field-label">Arquivo PDF <span class="req">*</span></label>
-          <label class="upload-file-label" for="recibo-file">
+          <label class="field-label">Arquivos <span class="req">*</span></label>
+          <label class="upload-file-label" for="doc-files">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/>
               <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.29"/>
             </svg>
-            <span id="recibo-filename">Selecionar PDF...</span>
+            <span id="doc-filename">Selecionar arquivos...</span>
           </label>
-          <input type="file" id="recibo-file" name="arquivo" accept=".pdf" style="display:none;"
-                 onchange="document.getElementById('recibo-filename').textContent = this.files[0]?.name || 'Selecionar PDF...'">
+          <input type="file" id="doc-files" name="arquivos" multiple style="display:none;"
+                 onchange="atualizarLabelDoc(this)">
         </div>
         <div>
           <label class="field-label">&nbsp;</label>
@@ -84,16 +84,16 @@
     </form>
   </div>
 
-  <!-- Aba: lote -->
+  <!-- Aba: lote (pasta da competência com subpastas por empresa) -->
   <div id="tab-lote" class="tab-pane">
     <p style="font-size:0.82rem;color:var(--muted);margin:0 0 14px;">
-      Selecione a pasta de recibos (ex: <em>abril/recibos</em>). O sistema extrai o CNPJ de cada PDF e identifica a empresa automaticamente.
-      Um comunicado é disparado para cada empresa que receber recibo.
+      Selecione a pasta da competência (ex: <em>Maio 2026/</em>). Cada subpasta deve ter o nome exato da empresa cadastrada.
+      Empresas não encontradas serão listadas no log. Competências já existentes são <strong>puladas</strong> (não substituídas).
     </p>
-    <form method="POST" action="{{ url_for('area_admin.recibo_lote') }}" enctype="multipart/form-data">
+    <form method="POST" action="{{ url_for('area_admin.documento_lote') }}" enctype="multipart/form-data">
       <div class="lote-grid">
         <div>
-          <label class="field-label">Mês (competência) <span class="req">*</span></label>
+          <label class="field-label">Mês <span class="req">*</span></label>
           <select name="mes" class="form-control" required>
             {% for nome in meses %}
             <option value="{{ loop.index }}">{{ nome }}</option>
@@ -105,15 +105,15 @@
           <input type="number" name="ano" class="form-control" value="{{ ano_atual }}" min="2020" max="2099" required>
         </div>
         <div>
-          <label class="field-label">PDFs <span class="req">*</span></label>
-          <label class="lote-file-label" for="lote-files-recibo">
+          <label class="field-label">Pasta da competência <span class="req">*</span></label>
+          <label class="lote-file-label" for="lote-docs">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
             </svg>
-            <span id="lote-label-recibo">Selecionar pasta de recibos...</span>
+            <span id="lote-docs-label">Selecionar pasta...</span>
           </label>
-          <input type="file" id="lote-files-recibo" name="arquivos" webkitdirectory multiple style="display:none;"
-                 onchange="atualizarLoteLabelRecibo(this)">
+          <input type="file" id="lote-docs" name="arquivos" webkitdirectory multiple style="display:none;"
+                 onchange="atualizarLoteDocs(this)">
         </div>
         <div>
           <label class="field-label">&nbsp;</label>
@@ -132,9 +132,17 @@
     <option value="{{ emp.id }}" {% if empresa_filtro == emp.id %}selected{% endif %}>{{ emp.razao_social }}</option>
     {% endfor %}
   </select>
+  <select name="mes" class="form-control" style="max-width:130px;">
+    <option value="">Todos os meses</option>
+    {% for nome in meses %}
+    <option value="{{ loop.index }}" {% if mes_filtro == loop.index %}selected{% endif %}>{{ nome }}</option>
+    {% endfor %}
+  </select>
+  <input type="number" name="ano" class="form-control" style="max-width:90px;" placeholder="Ano"
+         value="{{ ano_filtro or '' }}">
   <button type="submit" class="btn btn-ghost">Filtrar</button>
-  {% if empresa_filtro %}
-  <a href="{{ url_for('area_admin.recibos') }}" class="btn btn-ghost">Limpar</a>
+  {% if empresa_filtro or mes_filtro or ano_filtro %}
+  <a href="{{ url_for('area_admin.documentos') }}" class="btn btn-ghost">Limpar</a>
   {% endif %}
 </form>
 
@@ -153,37 +161,37 @@
         </tr>
       </thead>
       <tbody>
-        {% for r in recibos %}
+        {% for d in documentos %}
         <tr>
-          <td style="font-weight:500;">{{ r.empresa.razao_social }}</td>
-          <td>{{ r.competencia_label }}</td>
+          <td style="font-weight:500;">{{ d.empresa.razao_social }}</td>
+          <td>{{ d.competencia_label }}</td>
           <td style="font-size:0.8rem;color:var(--muted);">
-            {{ r.nome_original }}
-            <span style="margin-left:4px;">({{ r.tamanho_str }})</span>
+            {{ d.nome_original }}
+            <span style="margin-left:4px;">({{ d.tamanho_str }})</span>
           </td>
           <td style="font-size:0.8rem;color:var(--muted);">
-            {{ r.enviado_em.strftime('%d/%m/%Y %H:%M') }}
-            <br><span style="font-size:0.72rem;">por {{ r.enviado_por.nome }}</span>
+            {{ d.enviado_em.strftime('%d/%m/%Y %H:%M') }}
+            <br><span style="font-size:0.72rem;">por {{ d.enviado_por.nome }}</span>
           </td>
           <td style="text-align:center;">
-            <span class="badge b-{{ r.status }}">
-              {% if r.status == 'recebido' %}Recebido{% else %}Pendente{% endif %}
+            <span class="badge b-{{ d.status }}">
+              {% if d.status == 'recebido' %}Recebido{% else %}Pendente{% endif %}
             </span>
-            {% if r.recebido_em %}
+            {% if d.recebido_em %}
             <div style="font-size:0.65rem;color:var(--muted);margin-top:2px;">
-              {{ r.recebido_em.strftime('%d/%m %H:%M') }}
+              {{ d.recebido_em.strftime('%d/%m %H:%M') }}
             </div>
             {% endif %}
           </td>
           <td style="text-align:right;">
-            <form method="POST" action="{{ url_for('area_admin.recibo_excluir', id=r.id) }}" style="display:inline;"
-                  onsubmit="return confirm('Excluir este recibo?')">
+            <form method="POST" action="{{ url_for('area_admin.documento_excluir', id=d.id) }}" style="display:inline;"
+                  onsubmit="return confirm('Excluir este documento?')">
               <button type="submit" class="btn btn-danger btn-sm">Excluir</button>
             </form>
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:32px;">Nenhum recibo encontrado.</td></tr>
+        <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:32px;">Nenhum documento encontrado.</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -200,12 +208,22 @@ function switchTab(tab) {
   document.getElementById('tab-' + tab).classList.add('active');
 }
 
-function atualizarLoteLabelRecibo(input) {
-  var pdfs = Array.from(input.files).filter(function(f) { return f.name.toLowerCase().endsWith('.pdf'); });
-  var pasta = pdfs.length > 0 ? pdfs[0].webkitRelativePath.split('/')[0] : '';
-  document.getElementById('lote-label-recibo').textContent =
-    pdfs.length === 0 ? 'Selecionar pasta de recibos...' :
-    pasta + '  (' + pdfs.length + ' PDF' + (pdfs.length > 1 ? 's' : '') + ')';
+function atualizarLabelDoc(input) {
+  var n = input.files.length;
+  document.getElementById('doc-filename').textContent =
+    n === 0 ? 'Selecionar arquivos...' : n + ' arquivo' + (n > 1 ? 's' : '') + ' selecionado' + (n > 1 ? 's' : '');
+}
+
+function atualizarLoteDocs(input) {
+  var files = Array.from(input.files);
+  var pasta = files.length > 0 ? files[0].webkitRelativePath.split('/')[0] : '';
+  var empresas = new Set(files.map(function(f) {
+    var parts = f.webkitRelativePath.split('/');
+    return parts.length >= 2 ? parts[1] : '';
+  }).filter(Boolean));
+  document.getElementById('lote-docs-label').textContent =
+    files.length === 0 ? 'Selecionar pasta...' :
+    pasta + '  (' + empresas.size + ' empresa' + (empresas.size > 1 ? 's' : '') + '  ·  ' + files.length + ' arquivo' + (files.length > 1 ? 's' : '') + ')';
 }
 </script>
 {% endblock %}

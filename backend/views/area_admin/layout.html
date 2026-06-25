@@ -270,6 +270,13 @@
       Recibos
     </a>
 
+    <a class="nav-item {% if active == 'documentos' %}active{% endif %}" href="{{ url_for('area_admin.documentos') }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+      </svg>
+      Documentos
+    </a>
+
     <div class="nav-label" style="margin-top:6px;">Atendimento</div>
 
     <a class="nav-item" href="{{ url_for('area_colab.dashboard') }}">

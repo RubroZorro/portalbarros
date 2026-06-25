@@ -479,13 +479,11 @@
       Recibos
     </a>
 
-    <a class="nav-item locked">
+    <a class="nav-item {% if active == 'documentos' %}active{% endif %}" href="{{ url_for('area_cliente.documentos') }}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/>
-        <polyline points="13 2 13 9 20 9"/>
+        <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
       </svg>
       Documentos
-      <span class="nav-soon">Em breve</span>
     </a>
 
     <a class="nav-item locked">
