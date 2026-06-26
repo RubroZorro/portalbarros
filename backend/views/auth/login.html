@@ -135,7 +135,6 @@
     </div>
 
     <h2>Acesso ao Portal</h2>
-    <p class="subtitle">Clientes usam o CNPJ da empresa. Colaboradores usam o CPF individual.</p>
 
     {% with messages = get_flashed_messages(with_categories=True) %}
       {% for cat, msg in messages %}
@@ -146,7 +145,7 @@
     <form method="POST" action="{{ url_for('auth.login') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="form-group">
-        <label for="cnpj">CNPJ da empresa ou CPF do colaborador</label>
+        <label for="cnpj">CNPJ ou CPF</label>
         <input type="text" id="cnpj" name="cnpj" class="form-control"
                placeholder="00.000.000/0001-00 ou 000.000.000-00"
                value="{{ request.form.get('cnpj', '') }}" maxlength="18" required autofocus
@@ -163,21 +162,6 @@
       </div>
       <button type="submit" class="btn-login">Entrar</button>
     </form>
-
-    <div class="login-divider"><span>Como acessar</span></div>
-
-    <div class="hint-row">
-      <div class="hint-card">
-        <div class="hc-label">Clientes</div>
-        <div class="hc-val">CNPJ</div>
-        <div class="hc-desc">CNPJ da empresa (14 dígitos)</div>
-      </div>
-      <div class="hint-card">
-        <div class="hc-label">Colaboradores</div>
-        <div class="hc-val">CPF</div>
-        <div class="hc-desc">CPF individual (11 dígitos)</div>
-      </div>
-    </div>
 
     <div class="login-footer">
       <a href="https://wa.me/5581996876093?text=Olá!%20Esqueci%20minha%20senha%20do%20Portal%20Barros%20%26%20Barros%20e%20preciso%20de%20ajuda%20para%20redefini-la." target="_blank" rel="noopener">Esqueci minha senha</a>

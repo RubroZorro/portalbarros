@@ -38,23 +38,31 @@
     </div>
 
     <div class="field-group">
-      <label class="field-label">CPF ou CNPJ <span class="req">*</span></label>
-      <input type="text" name="cpf" id="doc-input" class="form-control"
-             value="{% if usuario %}{% if usuario.role == 'cliente' %}{{ usuario.empresa.cnpj if usuario.empresa else '' }}{% else %}{{ usuario.cpf or '' }}{% endif %}{% endif %}"
-             placeholder="000.000.000-00 ou 00.000.000/0000-00" maxlength="18">
-      <p style="font-size:0.75rem;color:var(--muted);margin-top:6px;" id="doc-hint">
-        Colaboradores e administradores: CPF. Clientes: CNPJ da empresa.
+      <label class="field-label">CPF <span class="req" id="cpf-req">*</span></label>
+      <input type="text" name="cpf" id="cpf-input" class="form-control"
+             value="{{ usuario.cpf or '' if usuario else '' }}"
+             placeholder="000.000.000-00" maxlength="14">
+      <p style="font-size:0.75rem;color:var(--muted);margin-top:6px;" id="cpf-hint">
+        CPF individual do colaborador — usado como identificação de login.
       </p>
     </div>
 
-    <div class="field-group" id="razao-field"
-         style="{% if not usuario or usuario.role != 'cliente' %}display:none;{% endif %}">
-      <label class="field-label">Razão Social da Empresa <span class="req">*</span></label>
-      <input type="text" name="razao_social" id="razao-input" class="form-control"
+    <!-- Empresa (apenas para clientes) -->
+    <div class="field-group" id="empresa-field" style="display:none; position:relative;">
+      <label class="field-label">Empresa <span class="req">*</span></label>
+      <input type="hidden" name="empresa_id" id="empresa-id"
+             value="{{ usuario.empresa_id if usuario else '' }}">
+      <input type="text" id="empresa-search" class="form-control"
              value="{{ usuario.empresa.razao_social if usuario and usuario.empresa else '' }}"
-             placeholder="Nome da empresa cliente">
+             placeholder="Digite o nome ou CNPJ da empresa..."
+             autocomplete="off">
+      <div id="empresa-dropdown" style="
+        display:none; position:absolute; top:100%; left:0; right:0; z-index:100;
+        background:#fff; border:1.5px solid var(--border); border-radius:8px;
+        margin-top:4px; box-shadow:0 8px 24px rgba(0,0,0,0.10); max-height:220px; overflow-y:auto;
+      "></div>
       <p style="font-size:0.75rem;color:var(--muted);margin-top:6px;">
-        Se o CNPJ já estiver cadastrado, a empresa existente será vinculada automaticamente.
+        Pesquise pelo nome ou CNPJ da empresa já cadastrada.
       </p>
     </div>
 
@@ -69,28 +77,98 @@
 {% endblock %}
 
 {% block scripts %}
+<style>
+  .dd-item {
+    padding: 10px 14px; cursor: pointer; font-size: 0.85rem;
+    border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 2px;
+  }
+  .dd-item:last-child { border-bottom: none; }
+  .dd-item:hover { background: var(--off); }
+  .dd-item .dd-cnpj { font-size: 0.72rem; color: var(--muted); }
+</style>
 <script>
-  function toggleFields(role) {
-    const razaoField = document.getElementById('razao-field');
-    const razaoInput = document.getElementById('razao-input');
-    const docInput   = document.getElementById('doc-input');
-    const docHint    = document.getElementById('doc-hint');
+  // ── Dados das empresas (injetados pelo servidor) ──
+  const EMPRESAS = [
+    {% for e in empresas %}
+    { id: {{ e.id }}, nome: {{ e.razao_social | tojson }}, cnpj: {{ e.cnpj | tojson }} }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
 
+  // ── Refs ──
+  const roleSelect     = document.getElementById('role-select');
+  const cpfInput       = document.getElementById('cpf-input');
+  const cpfReq         = document.getElementById('cpf-req');
+  const cpfHint        = document.getElementById('cpf-hint');
+  const empresaField   = document.getElementById('empresa-field');
+  const empresaSearch  = document.getElementById('empresa-search');
+  const empresaId      = document.getElementById('empresa-id');
+  const dropdown       = document.getElementById('empresa-dropdown');
+
+  // ── Alternância de campos por perfil ──
+  function toggleFields(role) {
     if (role === 'cliente') {
-      razaoField.style.display = '';
-      razaoInput.required = true;
-      docInput.placeholder = '00.000.000/0000-00';
-      docHint.textContent  = 'CNPJ da empresa cliente.';
+      empresaField.style.display = '';
+      cpfReq.style.display = 'none';
+      cpfInput.required = false;
+      cpfHint.textContent = 'CPF do responsável (opcional). Se preenchido, permite login individual por CPF.';
+      cpfInput.placeholder = '000.000.000-00 (opcional)';
     } else {
-      razaoField.style.display = 'none';
-      razaoInput.required = false;
-      docInput.placeholder = '000.000.000-00';
-      docHint.textContent  = 'CPF do colaborador — usado como identificação individual.';
+      empresaField.style.display = 'none';
+      cpfReq.style.display = '';
+      cpfInput.required = true;
+      cpfHint.textContent = 'CPF do colaborador — usado como identificação de login.';
+      cpfInput.placeholder = '000.000.000-00';
     }
   }
 
-  const sel = document.getElementById('role-select');
-  if (sel.value) toggleFields(sel.value);
-  sel.addEventListener('change', () => toggleFields(sel.value));
+  if (roleSelect.value) toggleFields(roleSelect.value);
+  roleSelect.addEventListener('change', () => toggleFields(roleSelect.value));
+
+  // ── Autocomplete de empresa ──
+  function renderDropdown(q) {
+    if (!q || q.length < 1) { dropdown.style.display = 'none'; return; }
+    const lower = q.toLowerCase();
+    const matches = EMPRESAS.filter(e =>
+      e.nome.toLowerCase().includes(lower) || e.cnpj.includes(lower)
+    ).slice(0, 10);
+
+    if (!matches.length) { dropdown.style.display = 'none'; return; }
+
+    dropdown.innerHTML = matches.map(e =>
+      `<div class="dd-item" data-id="${e.id}" data-nome="${e.nome.replace(/"/g, '&quot;')}">
+        ${e.nome}
+        <span class="dd-cnpj">${e.cnpj}</span>
+      </div>`
+    ).join('');
+    dropdown.style.display = 'block';
+  }
+
+  empresaSearch.addEventListener('input', function () {
+    empresaId.value = '';
+    renderDropdown(this.value);
+  });
+
+  document.addEventListener('click', function (e) {
+    const item = e.target.closest('.dd-item');
+    if (item) {
+      empresaId.value   = item.dataset.id;
+      empresaSearch.value = item.dataset.nome;
+      dropdown.style.display = 'none';
+      return;
+    }
+    if (!dropdown.contains(e.target) && e.target !== empresaSearch) {
+      dropdown.style.display = 'none';
+    }
+  });
+
+  // ── Validação no submit ──
+  document.getElementById('user-form').addEventListener('submit', function (e) {
+    const role = roleSelect.value;
+    if (role === 'cliente' && !empresaId.value) {
+      e.preventDefault();
+      alert('Selecione uma empresa da lista.');
+      empresaSearch.focus();
+    }
+  });
 </script>
 {% endblock %}

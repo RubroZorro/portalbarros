@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root { --navy: #1B2D6B; --navy-deep: #111e4a; --gold: #C9A227; --white: #fff; --text: #1a2340; --muted: #6b7280; --border: #e5e7eb; }
+    :root { --navy: #1B2D6B; --navy-deep: #111e4a; --gold: #C9A227; --white: #fff; --text: #1a2340; --muted: #6b7280; --border: #e5e7eb; --green: #16a34a; }
     html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: linear-gradient(135deg, var(--navy-deep), var(--navy)); }
     .wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
     .card { background: #fff; border-radius: 16px; padding: 44px 40px; width: 100%; max-width: 420px; box-shadow: 0 24px 60px rgba(0,0,0,0.25); }
@@ -20,9 +20,18 @@
     label { display: block; font-size: 0.8rem; font-weight: 500; margin-bottom: 6px; }
     input[type=password] { width: 100%; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; outline: none; transition: border-color 0.15s; }
     input[type=password]:focus { border-color: var(--navy); }
-    .hint { font-size: 0.72rem; color: var(--muted); margin-top: 5px; }
-    .btn { width: 100%; padding: 13px; background: var(--navy); color: #fff; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 600; cursor: pointer; margin-top: 8px; }
+
+    .pwd-rules { margin-top: 10px; display: flex; flex-direction: column; gap: 5px; }
+    .rule { display: flex; align-items: center; gap: 7px; font-size: 0.75rem; color: var(--muted); transition: color 0.15s; }
+    .rule .icon { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
+    .rule .icon svg { display: none; }
+    .rule.ok { color: var(--green); }
+    .rule.ok .icon { background: var(--green); border-color: var(--green); }
+    .rule.ok .icon svg { display: block; }
+
+    .btn { width: 100%; padding: 13px; background: var(--navy); color: #fff; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 600; cursor: pointer; margin-top: 8px; transition: background 0.15s; }
     .btn:hover { background: #2a3f8f; }
+    .btn:disabled { background: #9ca3af; cursor: not-allowed; }
     .btn-voltar { display: block; text-align: center; margin-top: 16px; font-size: 0.8rem; color: var(--muted); text-decoration: none; }
     .btn-voltar:hover { color: var(--navy); }
     .alert { padding: 12px 14px; border-radius: 8px; margin-bottom: 18px; font-size: 0.82rem; }
@@ -49,7 +58,7 @@
       {% endfor %}
     {% endwith %}
 
-    <form method="POST">
+    <form method="POST" id="pwd-form">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="form-group">
         <label>Senha atual</label>
@@ -57,17 +66,62 @@
       </div>
       <div class="form-group">
         <label>Nova senha</label>
-        <input type="password" name="nova_senha" placeholder="Mínimo 8 caracteres" required>
-        <div class="hint">Use letras, números e caracteres especiais.</div>
+        <input type="password" name="nova_senha" id="nova-senha" placeholder="Crie sua nova senha" required>
+        <div class="pwd-rules">
+          <div class="rule" id="rule-len">
+            <span class="icon"><svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,6 5,9 10,3"/></svg></span>
+            Mínimo 8 caracteres
+          </div>
+          <div class="rule" id="rule-upper">
+            <span class="icon"><svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,6 5,9 10,3"/></svg></span>
+            Uma letra maiúscula (A–Z)
+          </div>
+          <div class="rule" id="rule-special">
+            <span class="icon"><svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,6 5,9 10,3"/></svg></span>
+            Um caractere especial (!@#$%...)
+          </div>
+        </div>
       </div>
       <div class="form-group">
         <label>Confirmar nova senha</label>
-        <input type="password" name="confirma_senha" placeholder="Repita a nova senha" required>
+        <input type="password" name="confirma_senha" id="confirma-senha" placeholder="Repita a nova senha" required>
       </div>
-      <button type="submit" class="btn">Salvar nova senha</button>
+      <button type="submit" class="btn" id="btn-salvar" disabled>Salvar nova senha</button>
     </form>
     <a href="javascript:history.back()" class="btn-voltar">← Voltar</a>
   </div>
 </div>
+<script>
+  (function () {
+    var novaSenha     = document.getElementById('nova-senha');
+    var confirmaSenha = document.getElementById('confirma-senha');
+    var btnSalvar     = document.getElementById('btn-salvar');
+
+    function setRule(id, ok) {
+      var el = document.getElementById(id);
+      if (ok) el.classList.add('ok'); else el.classList.remove('ok');
+    }
+
+    function checkAll() {
+      var v = novaSenha.value;
+      var lenOk     = v.length >= 8;
+      var upperOk   = /[A-Z]/.test(v);
+      var specialOk = /[^A-Za-z0-9]/.test(v);
+      setRule('rule-len',     lenOk);
+      setRule('rule-upper',   upperOk);
+      setRule('rule-special', specialOk);
+      btnSalvar.disabled = !(lenOk && upperOk && specialOk);
+    }
+
+    novaSenha.addEventListener('input', checkAll);
+
+    document.getElementById('pwd-form').addEventListener('submit', function (e) {
+      if (novaSenha.value !== confirmaSenha.value) {
+        e.preventDefault();
+        alert('As senhas não coincidem.');
+      }
+    });
+  })();
+</script>
 </body>
 </html>

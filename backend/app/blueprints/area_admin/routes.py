@@ -290,18 +290,14 @@ def usuario_novo():
             return redirect(url_for('area_admin.usuario_novo'))
 
         if role == 'cliente':
-            cnpj_emp = request.form.get('cpf', '').strip()
-            razao    = request.form.get('razao_social', '').strip()
-            if not cnpj_emp or not razao:
-                flash('Informe o CNPJ e a razão social da empresa cliente.', 'erro')
+            empresa_id = request.form.get('empresa_id', type=int)
+            if not empresa_id or not Empresa.query.get(empresa_id):
+                flash('Selecione uma empresa válida.', 'erro')
                 return redirect(url_for('area_admin.usuario_novo'))
-            empresa = Empresa.query.filter_by(cnpj=cnpj_emp).first()
-            if not empresa:
-                empresa = Empresa(cnpj=cnpj_emp, razao_social=razao, ativo=True)
-                db.session.add(empresa)
-                db.session.flush()
-            empresa_id = empresa.id
-            cpf = None
+            cpf = request.form.get('cpf', '').strip() or None
+            if cpf and Usuario.query.filter_by(cpf=cpf).first():
+                flash('Já existe um usuário com esse CPF.', 'erro')
+                return redirect(url_for('area_admin.usuario_novo'))
         else:
             cpf = request.form.get('cpf', '').strip() or None
             if not cpf:
@@ -355,18 +351,16 @@ def usuario_editar(id):
         escritorio = Empresa.query.filter_by(cnpj='00.000.000/0001-00').first()
 
         if role == 'cliente':
-            cnpj_emp = request.form.get('cpf', '').strip()
-            razao    = request.form.get('razao_social', '').strip()
-            if not cnpj_emp or not razao:
-                flash('Informe o CNPJ e a razão social da empresa cliente.', 'erro')
+            empresa_id = request.form.get('empresa_id', type=int)
+            if not empresa_id or not Empresa.query.get(empresa_id):
+                flash('Selecione uma empresa válida.', 'erro')
                 return redirect(url_for('area_admin.usuario_editar', id=id))
-            empresa = Empresa.query.filter_by(cnpj=cnpj_emp).first()
-            if not empresa:
-                empresa = Empresa(cnpj=cnpj_emp, razao_social=razao, ativo=True)
-                db.session.add(empresa)
-                db.session.flush()
-            empresa_id = empresa.id
-            cpf = None
+            cpf = request.form.get('cpf', '').strip() or None
+            if cpf:
+                conflito_cpf = Usuario.query.filter(Usuario.cpf == cpf, Usuario.id != id).first()
+                if conflito_cpf:
+                    flash('Já existe outro usuário com esse CPF.', 'erro')
+                    return redirect(url_for('area_admin.usuario_editar', id=id))
         else:
             cpf = request.form.get('cpf', '').strip() or None
             if not cpf:

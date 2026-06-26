@@ -1,5 +1,15 @@
 import re
 from flask import Blueprint, render_template, redirect, url_for, request, flash
+
+
+def _validar_senha_forca(senha: str) -> str | None:
+    if len(senha) < 8:
+        return 'A senha deve ter pelo menos 8 caracteres.'
+    if not re.search(r'[A-Z]', senha):
+        return 'A senha deve conter pelo menos uma letra maiúscula.'
+    if not re.search(r'[^A-Za-z0-9]', senha):
+        return 'A senha deve conter pelo menos um caractere especial (!@#$%...).'
+    return None
 from flask_login import login_user, logout_user, login_required, current_user
 from app.models.empresa import Empresa
 from app.models.usuario import Usuario
@@ -85,8 +95,9 @@ def trocar_senha():
         nova = request.form.get('nova_senha', '')
         confirma = request.form.get('confirma_senha', '')
 
-        if len(nova) < 8:
-            flash('A senha deve ter pelo menos 8 caracteres.', 'erro')
+        erro = _validar_senha_forca(nova)
+        if erro:
+            flash(erro, 'erro')
         elif nova != confirma:
             flash('As senhas não coincidem.', 'erro')
         else:
@@ -110,8 +121,8 @@ def alterar_senha():
 
         if not current_user.check_password(atual):
             flash('Senha atual incorreta.', 'erro')
-        elif len(nova) < 8:
-            flash('A nova senha deve ter pelo menos 8 caracteres.', 'erro')
+        elif (erro := _validar_senha_forca(nova)):
+            flash(erro, 'erro')
         elif nova != confirma:
             flash('As senhas não coincidem.', 'erro')
         else:

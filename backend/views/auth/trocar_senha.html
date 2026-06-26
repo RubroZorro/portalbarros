@@ -9,18 +9,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root { --navy: #1B2D6B; --navy-deep: #111e4a; --gold: #C9A227; --white: #fff; --text: #1a2340; --muted: #6b7280; --border: #e5e7eb; }
+    :root { --navy: #1B2D6B; --navy-deep: #111e4a; --gold: #C9A227; --white: #fff; --text: #1a2340; --muted: #6b7280; --border: #e5e7eb; --green: #16a34a; --red: #dc2626; }
     html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: linear-gradient(135deg, var(--navy-deep), var(--navy)); }
     .wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
-    .card {
-      background: #fff; border-radius: 16px; padding: 44px 40px;
-      width: 100%; max-width: 420px; box-shadow: 0 24px 60px rgba(0,0,0,0.25);
-    }
-    .lock-icon {
-      width: 52px; height: 52px; border-radius: 14px;
-      background: rgba(27,45,107,0.08); display: flex; align-items: center;
-      justify-content: center; margin-bottom: 20px; color: var(--navy);
-    }
+    .card { background: #fff; border-radius: 16px; padding: 44px 40px; width: 100%; max-width: 420px; box-shadow: 0 24px 60px rgba(0,0,0,0.25); }
+    .lock-icon { width: 52px; height: 52px; border-radius: 14px; background: rgba(27,45,107,0.08); display: flex; align-items: center; justify-content: center; margin-bottom: 20px; color: var(--navy); }
     h2 { font-size: 1.3rem; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
     p.sub { font-size: 0.82rem; color: var(--muted); margin-bottom: 28px; line-height: 1.55; }
     .form-group { margin-bottom: 16px; }
@@ -31,16 +24,26 @@
       outline: none; transition: border-color 0.15s;
     }
     input[type=password]:focus { border-color: var(--navy); }
-    .hint { font-size: 0.72rem; color: var(--muted); margin-top: 5px; }
-    .btn {
-      width: 100%; padding: 13px; background: var(--navy); color: #fff;
-      border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif;
-      font-size: 0.9rem; font-weight: 600; cursor: pointer; margin-top: 8px;
+
+    /* ── Checklist de força ── */
+    .pwd-rules { margin-top: 10px; display: flex; flex-direction: column; gap: 5px; }
+    .rule {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 0.75rem; color: var(--muted); transition: color 0.15s;
     }
+    .rule .icon { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
+    .rule .icon svg { display: none; }
+    .rule.ok { color: var(--green); }
+    .rule.ok .icon { background: var(--green); border-color: var(--green); }
+    .rule.ok .icon svg { display: block; }
+
+    .btn { width: 100%; padding: 13px; background: var(--navy); color: #fff; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 600; cursor: pointer; margin-top: 8px; transition: background 0.15s; }
     .btn:hover { background: #2a3f8f; }
+    .btn:disabled { background: #9ca3af; cursor: not-allowed; }
     .alert { padding: 12px 14px; border-radius: 8px; margin-bottom: 18px; font-size: 0.82rem; }
     .alert-erro    { background: rgba(220,38,38,0.08); color: #b91c1c; border: 1px solid rgba(220,38,38,0.18); }
     .alert-sucesso { background: rgba(22,163,74,0.08); color: #15803d; border: 1px solid rgba(22,163,74,0.18); }
+    @media (max-width: 480px) { .card { padding: 32px 24px; } }
   </style>
 </head>
 <body>
@@ -61,33 +64,69 @@
       {% endfor %}
     {% endwith %}
 
-    <form method="POST">
+    <form method="POST" id="pwd-form">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="form-group">
         <label>Nova senha</label>
-        <input type="password" name="nova_senha" placeholder="Mínimo 8 caracteres" required>
-        <div class="hint">Use letras, números e caracteres especiais para uma senha forte.</div>
+        <input type="password" name="nova_senha" id="nova-senha" placeholder="Crie sua senha" required autofocus>
+        <div class="pwd-rules" id="pwd-rules">
+          <div class="rule" id="rule-len">
+            <span class="icon"><svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,6 5,9 10,3"/></svg></span>
+            Mínimo 8 caracteres
+          </div>
+          <div class="rule" id="rule-upper">
+            <span class="icon"><svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,6 5,9 10,3"/></svg></span>
+            Uma letra maiúscula (A–Z)
+          </div>
+          <div class="rule" id="rule-special">
+            <span class="icon"><svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,6 5,9 10,3"/></svg></span>
+            Um caractere especial (!@#$%...)
+          </div>
+        </div>
       </div>
       <div class="form-group">
         <label>Confirmar nova senha</label>
-        <input type="password" name="confirma_senha" placeholder="Repita a senha" required>
+        <input type="password" name="confirma_senha" id="confirma-senha" placeholder="Repita a senha" required>
       </div>
-      <button type="submit" class="btn">Salvar senha e entrar</button>
+      <button type="submit" class="btn" id="btn-salvar" disabled>Salvar senha e entrar</button>
     </form>
   </div>
 </div>
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    var token = document.querySelector('meta[name="csrf-token"]');
-    if (!token) return;
-    document.querySelectorAll('form').forEach(function (f) {
-      if (f.method.toLowerCase() === 'post' && !f.querySelector('[name="csrf_token"]')) {
-        var inp = document.createElement('input');
-        inp.type = 'hidden'; inp.name = 'csrf_token'; inp.value = token.content;
-        f.appendChild(inp);
+  (function () {
+    var novaSenha   = document.getElementById('nova-senha');
+    var confirmaSenha = document.getElementById('confirma-senha');
+    var btnSalvar   = document.getElementById('btn-salvar');
+
+    function setRule(id, ok) {
+      var el = document.getElementById(id);
+      if (ok) el.classList.add('ok'); else el.classList.remove('ok');
+    }
+
+    function checkAll() {
+      var v = novaSenha.value;
+      var lenOk     = v.length >= 8;
+      var upperOk   = /[A-Z]/.test(v);
+      var specialOk = /[^A-Za-z0-9]/.test(v);
+      setRule('rule-len',     lenOk);
+      setRule('rule-upper',   upperOk);
+      setRule('rule-special', specialOk);
+      var valid = lenOk && upperOk && specialOk;
+      btnSalvar.disabled = !valid;
+      return valid;
+    }
+
+    novaSenha.addEventListener('input', checkAll);
+    confirmaSenha.addEventListener('input', checkAll);
+
+    document.getElementById('pwd-form').addEventListener('submit', function (e) {
+      if (!checkAll()) { e.preventDefault(); return; }
+      if (novaSenha.value !== confirmaSenha.value) {
+        e.preventDefault();
+        alert('As senhas não coincidem.');
       }
     });
-  });
+  })();
 </script>
 </body>
 </html>
