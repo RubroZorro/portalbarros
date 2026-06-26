@@ -2,34 +2,186 @@
 {% block title %}{% if empresa %}Editar Empresa{% else %}Nova Empresa{% endif %}{% endblock %}
 {% block topbar_title %}{% if empresa %}Editar Empresa{% else %}Nova Empresa{% endif %}{% endblock %}
 
+{% block head %}
+<style>
+  .tab-bar { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 24px; }
+  .tab-btn {
+    padding: 9px 20px; font-size: 0.83rem; font-weight: 500; color: var(--muted);
+    background: none; border: none; border-bottom: 2px solid transparent;
+    margin-bottom: -2px; cursor: pointer; font-family: inherit; transition: color 0.15s;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--navy); border-bottom-color: var(--navy); font-weight: 600; }
+  .tab-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 18px; height: 18px; padding: 0 5px;
+    background: var(--navy); color: white; border-radius: 20px;
+    font-size: 0.68rem; font-weight: 700; margin-left: 6px;
+  }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* lista de emails */
+  .email-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+  .email-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 11px 16px; background: white;
+    border: 1px solid var(--border); border-radius: 10px;
+  }
+  .email-icon {
+    width: 34px; height: 34px; border-radius: 8px;
+    background: rgba(27,45,107,0.08); color: var(--navy);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .email-icon svg { width: 15px; height: 15px; }
+  .email-info { flex: 1; min-width: 0; }
+  .email-addr { font-size: 0.85rem; font-weight: 500; color: var(--text); }
+  .email-label { font-size: 0.72rem; color: var(--muted); margin-top: 1px; }
+  .email-empty { padding: 32px; text-align: center; font-size: 0.83rem; color: var(--muted);
+                 background: white; border: 1px dashed var(--border); border-radius: 10px; }
+
+  /* add form */
+  .add-email-form {
+    background: white; border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px; margin-top: 6px;
+  }
+  .add-email-form .field-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+  .add-email-form .field-group { flex: 1; min-width: 200px; margin-bottom: 0; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="page-header">
   <div>
-    <h1>{% if empresa %}Editar Empresa{% else %}Nova Empresa{% endif %}</h1>
-    <p>{% if empresa %}Atualize os dados da empresa.{% else %}Cadastre uma nova empresa cliente.{% endif %}</p>
+    <h1>{% if empresa %}{{ empresa.razao_social }}{% else %}Nova Empresa{% endif %}</h1>
+    <p>{% if empresa %}CNPJ: {{ empresa.cnpj }}{% else %}Cadastre uma nova empresa cliente.{% endif %}</p>
+  </div>
+  <a href="{{ url_for('area_admin.empresas') }}" class="btn btn-ghost">← Empresas</a>
+</div>
+
+{% if empresa %}
+{# ── Abas (só na edição) ── #}
+<div class="tab-bar">
+  <button class="tab-btn {% if tab_ativa == 'dados' %}active{% endif %}"
+          onclick="switchTab(this,'dados')">Dados</button>
+  <button class="tab-btn {% if tab_ativa == 'emails' %}active{% endif %}"
+          onclick="switchTab(this,'emails')">
+    E-mails
+    {% if empresa.emails %}
+      <span class="tab-badge">{{ empresa.emails|length }}</span>
+    {% endif %}
+  </button>
+</div>
+
+{# ── Aba Dados ── #}
+<div id="tab-dados" class="tab-pane {% if tab_ativa == 'dados' %}active{% endif %}">
+  <div class="form-card">
+    <form method="POST" action="{{ url_for('area_admin.empresa_editar', id=empresa.id) }}">
+      <div class="field-group">
+        <label class="field-label">Razão Social <span class="req">*</span></label>
+        <input type="text" name="razao_social" class="form-control"
+               value="{{ empresa.razao_social }}" required>
+      </div>
+      <div class="field-group">
+        <label class="field-label">CNPJ <span class="req">*</span></label>
+        <input type="text" name="cnpj" class="form-control"
+               value="{{ empresa.cnpj }}" placeholder="XX.XXX.XXX/XXXX-XX" required>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+        <a href="{{ url_for('area_admin.empresas') }}" class="btn btn-ghost">Cancelar</a>
+      </div>
+    </form>
   </div>
 </div>
 
+{# ── Aba E-mails ── #}
+<div id="tab-emails" class="tab-pane {% if tab_ativa == 'emails' %}active{% endif %}">
+
+  {# lista existente #}
+  {% if empresa.emails %}
+  <div class="email-list">
+    {% for e in empresa.emails %}
+    <div class="email-row">
+      <div class="email-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+          <polyline points="22,6 12,13 2,6"/>
+        </svg>
+      </div>
+      <div class="email-info">
+        <div class="email-addr">{{ e.email }}</div>
+        {% if e.nome_contato %}
+        <div class="email-label">{{ e.nome_contato }}</div>
+        {% endif %}
+      </div>
+      <form method="POST"
+            action="{{ url_for('area_admin.empresa_email_excluir', empresa_id=empresa.id, email_id=e.id) }}"
+            onsubmit="return confirm('Remover {{ e.email }}?')">
+        <button type="submit" class="btn btn-sm btn-danger">Remover</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="email-empty">Nenhum e-mail cadastrado para esta empresa.</div>
+  {% endif %}
+
+  {# formulário de adição #}
+  <p style="font-size:0.8rem;font-weight:600;color:var(--text);margin:20px 0 8px;">Adicionar e-mail</p>
+  <div class="add-email-form">
+    <form method="POST"
+          action="{{ url_for('area_admin.empresa_email_adicionar', id=empresa.id) }}">
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">E-mail <span class="req">*</span></label>
+          <input type="email" name="email" class="form-control"
+                 placeholder="contato@empresa.com.br" required>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Etiqueta <span style="color:var(--muted);font-weight:400;">(opcional)</span></label>
+          <input type="text" name="nome_contato" class="form-control"
+                 placeholder="Ex: Financeiro, Sócia Maria">
+        </div>
+        <div style="padding-bottom:1px;">
+          <button type="submit" class="btn btn-primary">Adicionar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+</div>
+
+{% else %}
+{# ── Formulário simples (nova empresa) ── #}
 <div class="form-card">
   <form method="POST">
     <div class="field-group">
       <label class="field-label">Razão Social <span class="req">*</span></label>
       <input type="text" name="razao_social" class="form-control"
-             value="{{ empresa.razao_social if empresa else '' }}"
              placeholder="Ex: Empresa Exemplo Ltda" required>
     </div>
     <div class="field-group">
       <label class="field-label">CNPJ <span class="req">*</span></label>
       <input type="text" name="cnpj" class="form-control"
-             value="{{ empresa.cnpj if empresa else '' }}"
              placeholder="XX.XXX.XXX/XXXX-XX" required>
     </div>
     <div class="form-actions">
-      <button type="submit" class="btn btn-primary">
-        {% if empresa %}Salvar Alterações{% else %}Criar Empresa{% endif %}
-      </button>
+      <button type="submit" class="btn btn-primary">Criar Empresa</button>
       <a href="{{ url_for('area_admin.empresas') }}" class="btn btn-ghost">Cancelar</a>
     </div>
   </form>
 </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function switchTab(btn, name) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+  }
+</script>
 {% endblock %}

@@ -14,6 +14,9 @@ class Empresa(db.Model):
     usuarios = db.relationship('Usuario', backref='empresa', lazy='select',
                                 foreign_keys='Usuario.empresa_id')
     chamados = db.relationship('Chamado', backref='empresa', lazy='dynamic')
+    emails   = db.relationship('EmailEmpresa', backref='empresa', lazy='select',
+                                order_by='EmailEmpresa.created_at',
+                                cascade='all, delete-orphan')
 
     def __repr__(self):
         return f'<Empresa {self.cnpj}>'

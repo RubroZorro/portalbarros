@@ -19,6 +19,7 @@ from app.models.boleto import Boleto
 from app.models.recibo import Recibo
 from app.models.comunicado import Comunicado
 from app.models.documento import Documento
+from app.models.email_empresa import EmailEmpresa
 
 admin_bp = Blueprint('area_admin', __name__)
 
@@ -201,7 +202,38 @@ def empresa_editar(id):
         db.session.commit()
         flash('Empresa atualizada.', 'sucesso')
         return redirect(url_for('area_admin.empresas'))
-    return render_template('area_admin/empresa_form.html', active='empresas', empresa=empresa)
+    tab = request.args.get('tab', 'dados')
+    return render_template('area_admin/empresa_form.html',
+                           active='empresas', empresa=empresa, tab_ativa=tab)
+
+
+@admin_bp.route('/empresas/<int:id>/emails/adicionar', methods=['POST'])
+@admin_required
+def empresa_email_adicionar(id):
+    empresa = Empresa.query.get_or_404(id)
+    email = request.form.get('email', '').strip().lower()
+    nome_contato = request.form.get('nome_contato', '').strip() or None
+    if not email or '@' not in email:
+        flash('Endereço de e-mail inválido.', 'erro')
+        return redirect(url_for('area_admin.empresa_editar', id=id, tab='emails'))
+    ja_existe = EmailEmpresa.query.filter_by(empresa_id=id, email=email).first()
+    if ja_existe:
+        flash('Este e-mail já está cadastrado para essa empresa.', 'erro')
+        return redirect(url_for('area_admin.empresa_editar', id=id, tab='emails'))
+    db.session.add(EmailEmpresa(empresa_id=id, email=email, nome_contato=nome_contato))
+    db.session.commit()
+    flash(f'E-mail {email} adicionado.', 'sucesso')
+    return redirect(url_for('area_admin.empresa_editar', id=id, tab='emails'))
+
+
+@admin_bp.route('/empresas/<int:empresa_id>/emails/<int:email_id>/excluir', methods=['POST'])
+@admin_required
+def empresa_email_excluir(empresa_id, email_id):
+    entry = EmailEmpresa.query.filter_by(id=email_id, empresa_id=empresa_id).first_or_404()
+    db.session.delete(entry)
+    db.session.commit()
+    flash('E-mail removido.', 'sucesso')
+    return redirect(url_for('area_admin.empresa_editar', id=empresa_id, tab='emails'))
 
 
 @admin_bp.route('/empresas/<int:id>/toggle', methods=['POST'])
