@@ -14,6 +14,14 @@ class Config:
     R2_ACCESS_KEY = os.environ.get('R2_ACCESS_KEY')
     R2_SECRET_KEY = os.environ.get('R2_SECRET_KEY')
 
+    # Flask-Mail (Gmail SMTP)
+    MAIL_SERVER   = 'smtp.gmail.com'
+    MAIL_PORT     = 587
+    MAIL_USE_TLS  = True
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER', 'Portal Barros & Barros <barroscontabil@gmail.com>')
+
     # Flask-WTF
     WTF_CSRF_ENABLED = True
 

@@ -1,7 +1,7 @@
 import os
 from flask import Flask, redirect, url_for, flash, render_template
 from app.config import DevConfig, ProdConfig
-from app.extensions import db, login_manager, limiter, csrf
+from app.extensions import db, login_manager, limiter, csrf, mail
 
 
 def create_app():
@@ -20,6 +20,7 @@ def create_app():
     login_manager.init_app(app)
     limiter.init_app(app)
     csrf.init_app(app)
+    mail.init_app(app)
 
     @app.errorhandler(429)
     def ratelimit_handler(e):
