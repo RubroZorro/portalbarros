@@ -102,46 +102,66 @@ def _corpo_email(tipo: str, n: int, mes_nome: str, ano: int) -> tuple[str, str, 
 
 def _enviar_arquivo_por_email(empresa_id, mes, ano, nome_arquivo, dados, tipo, anexos=None):
     """Envia arquivo(s) por email para os contatos cadastrados da empresa."""
+    from flask import flash
     from app.models.email_empresa import EmailEmpresa
     from app.utils.email import send_email, email_html
 
     emails = [e.email for e in EmailEmpresa.query.filter_by(empresa_id=empresa_id).all()]
+    empresa = Empresa.query.get(empresa_id)
     if not emails:
+        flash(f'E-mail não enviado: nenhum endereço cadastrado para {empresa.razao_social}. '
+              f'Adicione em Empresas → E-mails.', 'aviso')
         return
 
-    empresa = Empresa.query.get(empresa_id)
     mes_nome = MESES_NOMES[mes - 1]
-
     if anexos is None:
         ext = os.path.splitext(nome_arquivo)[1].lower() if nome_arquivo else '.pdf'
         mime = 'application/pdf' if ext == '.pdf' else 'application/octet-stream'
         anexos = [(nome_arquivo, dados, mime)]
 
     titulo, corpo = _corpo_email(tipo, len(anexos), mes_nome, ano)
-    send_email(
+    ok = send_email(
         destinatarios=emails,
         assunto=f'{titulo} — {mes_nome}/{ano} | {empresa.razao_social}',
         corpo_html=email_html(corpo),
         anexos=anexos,
     )
+    if ok:
+        flash(f'E-mail enviado para: {", ".join(emails)}.', 'sucesso')
+    else:
+        flash('Falha ao enviar e-mail. Verifique as configurações SMTP.', 'aviso')
 
 
 def _enviar_lote_por_email(emails_lote: dict, mes_nome: str, ano: int, tipo: str):
     """Envia emails em lote após commit — um email por empresa com seus anexos."""
+    from flask import flash
     from app.models.email_empresa import EmailEmpresa
     from app.utils.email import send_email, email_html
 
+    enviados, sem_email, falhas = [], [], []
     for empresa_id, info in emails_lote.items():
         emails = [e.email for e in EmailEmpresa.query.filter_by(empresa_id=empresa_id).all()]
         if not emails:
+            sem_email.append(info['razao'])
             continue
         titulo, corpo = _corpo_email(tipo, len(info['arquivos']), mes_nome, ano)
-        send_email(
+        ok = send_email(
             destinatarios=emails,
             assunto=f'{titulo} — {mes_nome}/{ano} | {info["razao"]}',
             corpo_html=email_html(corpo),
             anexos=info['arquivos'],
         )
+        if ok:
+            enviados.append(info['razao'])
+        else:
+            falhas.append(info['razao'])
+
+    if enviados:
+        flash(f'E-mail enviado para {len(enviados)} empresa(s): {", ".join(enviados)}.', 'sucesso')
+    if sem_email:
+        flash(f'Sem e-mail cadastrado ({len(sem_email)}): {", ".join(sem_email)}.', 'aviso')
+    if falhas:
+        flash(f'Falha ao enviar para ({len(falhas)}): {", ".join(falhas)}.', 'erro')
 
 
 # ──────────────────────────────────────────────
@@ -258,10 +278,42 @@ def empresa_nova():
         if Empresa.query.filter_by(cnpj=cnpj).first():
             flash('Já existe uma empresa com esse CNPJ.', 'erro')
             return redirect(url_for('area_admin.empresa_nova'))
-        db.session.add(Empresa(cnpj=cnpj, razao_social=razao, ativo=True))
+
+        from werkzeug.security import generate_password_hash
+        empresa = Empresa(cnpj=cnpj, razao_social=razao, ativo=True)
+        db.session.add(empresa)
+        db.session.flush()  # garante empresa.id antes do commit
+
+        cnpj_digits = ''.join(c for c in cnpj if c.isdigit())
+        senha_temp = 'Barros@2026'
+        db.session.add(Usuario(
+            nome=razao,
+            email=f'cliente.{cnpj_digits}@portal.local',
+            senha_hash=generate_password_hash(senha_temp),
+            role='cliente',
+            empresa_id=empresa.id,
+            ativo=True,
+            senha_temporaria=True,
+        ))
+
+        emails_form  = request.form.getlist('emails[]')
+        contatos_form = request.form.getlist('contatos[]')
+        for email_val, contato_val in zip(emails_form, contatos_form):
+            email_val = email_val.strip().lower()
+            if email_val and '@' in email_val:
+                db.session.add(EmailEmpresa(
+                    empresa_id=empresa.id,
+                    email=email_val,
+                    nome_contato=contato_val.strip() or None,
+                ))
+
         db.session.commit()
-        flash(f'Empresa "{razao}" criada com sucesso.', 'sucesso')
-        return redirect(url_for('area_admin.empresas'))
+        flash(
+            f'Empresa "{razao}" criada. Login: <strong>{cnpj}</strong> · '
+            f'Senha temporária: <strong>{senha_temp}</strong>.',
+            'sucesso'
+        )
+        return redirect(url_for('area_admin.empresa_editar', id=empresa.id, tab='emails'))
     return render_template('area_admin/empresa_form.html', active='empresas', empresa=None)
 
 

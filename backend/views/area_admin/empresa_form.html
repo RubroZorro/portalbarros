@@ -153,25 +153,61 @@
 </div>
 
 {% else %}
-{# ── Formulário simples (nova empresa) ── #}
-<div class="form-card">
-  <form method="POST">
-    <div class="field-group">
-      <label class="field-label">Razão Social <span class="req">*</span></label>
-      <input type="text" name="razao_social" class="form-control"
-             placeholder="Ex: Empresa Exemplo Ltda" required>
-    </div>
-    <div class="field-group">
-      <label class="field-label">CNPJ <span class="req">*</span></label>
-      <input type="text" name="cnpj" class="form-control"
-             placeholder="XX.XXX.XXX/XXXX-XX" required>
-    </div>
-    <div class="form-actions">
-      <button type="submit" class="btn btn-primary">Criar Empresa</button>
-      <a href="{{ url_for('area_admin.empresas') }}" class="btn btn-ghost">Cancelar</a>
-    </div>
-  </form>
+{# ── Nova Empresa: abas Dados + E-mails ── #}
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab(this,'dados')">Dados</button>
+  <button class="tab-btn" onclick="switchTab(this,'emails')">E-mails
+    <span style="font-size:0.7rem;color:var(--muted);font-weight:400;margin-left:4px;">(opcional)</span>
+  </button>
 </div>
+
+<form method="POST">
+  {# ── Aba Dados ── #}
+  <div id="tab-dados" class="tab-pane active">
+    <div class="form-card">
+      <div class="field-group">
+        <label class="field-label">Razão Social <span class="req">*</span></label>
+        <input type="text" name="razao_social" class="form-control"
+               placeholder="Ex: Empresa Exemplo Ltda" required>
+      </div>
+      <div class="field-group">
+        <label class="field-label">CNPJ <span class="req">*</span></label>
+        <input type="text" name="cnpj" class="form-control"
+               placeholder="XX.XXX.XXX/XXXX-XX" required>
+      </div>
+    </div>
+  </div>
+
+  {# ── Aba E-mails ── #}
+  <div id="tab-emails" class="tab-pane">
+    <div class="form-card">
+      <p style="font-size:0.82rem;color:var(--muted);margin:0 0 18px;">
+        Adicione os e-mails de contato da empresa. Você poderá incluir mais após salvar.
+      </p>
+      <div id="email-fields">
+        <div class="add-email-form" style="margin-bottom:10px;">
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">E-mail</label>
+              <input type="email" name="emails[]" class="form-control" placeholder="contato@empresa.com.br">
+            </div>
+            <div class="field-group">
+              <label class="field-label">Etiqueta <span style="color:var(--muted);font-weight:400;">(opcional)</span></label>
+              <input type="text" name="contatos[]" class="form-control" placeholder="Ex: Financeiro, Sócia Maria">
+            </div>
+          </div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-ghost" style="font-size:0.8rem;"
+              onclick="adicionarEmailField()">+ Adicionar outro e-mail</button>
+    </div>
+  </div>
+
+  <div class="form-actions" style="margin-top:16px;">
+    <button type="submit" class="btn btn-primary">Criar Empresa</button>
+    <a href="{{ url_for('area_admin.empresas') }}" class="btn btn-ghost">Cancelar</a>
+  </div>
+</form>
 {% endif %}
 {% endblock %}
 
@@ -182,6 +218,28 @@
     document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
     document.getElementById('tab-' + name).classList.add('active');
     btn.classList.add('active');
+  }
+
+  function adicionarEmailField() {
+    var container = document.getElementById('email-fields');
+    var div = document.createElement('div');
+    div.className = 'add-email-form';
+    div.style.marginBottom = '10px';
+    div.innerHTML =
+      '<div class="field-row">' +
+        '<div class="field-group">' +
+          '<label class="field-label">E-mail</label>' +
+          '<input type="email" name="emails[]" class="form-control" placeholder="contato@empresa.com.br">' +
+        '</div>' +
+        '<div class="field-group">' +
+          '<label class="field-label">Etiqueta <span style="color:var(--muted);font-weight:400;">(opcional)</span></label>' +
+          '<input type="text" name="contatos[]" class="form-control" placeholder="Ex: Financeiro, Sócia Maria">' +
+        '</div>' +
+        '<div style="padding-bottom:1px;display:flex;align-items:flex-end;">' +
+          '<button type="button" class="btn btn-sm btn-danger" onclick="this.closest(\'.add-email-form\').remove()">Remover</button>' +
+        '</div>' +
+      '</div>';
+    container.appendChild(div);
   }
 </script>
 {% endblock %}
