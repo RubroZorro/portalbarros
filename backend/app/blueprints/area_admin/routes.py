@@ -133,35 +133,33 @@ def _enviar_arquivo_por_email(empresa_id, mes, ano, nome_arquivo, dados, tipo, a
 
 
 def _enviar_lote_por_email(emails_lote: dict, mes_nome: str, ano: int, tipo: str):
-    """Envia emails em lote após commit — um email por empresa com seus anexos."""
+    """Envia emails em lote em segundo plano — uma conexão SMTP para todas as empresas."""
     from flask import flash
     from app.models.email_empresa import EmailEmpresa
-    from app.utils.email import send_email, email_html
+    from app.utils.email import send_emails_lote, email_html
 
-    enviados, sem_email, falhas = [], [], []
+    lote = []
+    sem_email = []
     for empresa_id, info in emails_lote.items():
         emails = [e.email for e in EmailEmpresa.query.filter_by(empresa_id=empresa_id).all()]
         if not emails:
             sem_email.append(info['razao'])
             continue
         titulo, corpo = _corpo_email(tipo, len(info['arquivos']), mes_nome, ano)
-        ok = send_email(
-            destinatarios=emails,
-            assunto=f'{titulo} — {mes_nome}/{ano} | {info["razao"]}',
-            corpo_html=email_html(corpo),
-            anexos=info['arquivos'],
-        )
-        if ok:
-            enviados.append(info['razao'])
-        else:
-            falhas.append(info['razao'])
+        lote.append({
+            'destinatarios': emails,
+            'assunto': f'{titulo} — {mes_nome}/{ano} | {info["razao"]}',
+            'corpo_html': email_html(corpo),
+            'anexos': info['arquivos'],
+        })
 
-    if enviados:
-        flash(f'E-mail enviado para {len(enviados)} empresa(s): {", ".join(enviados)}.', 'sucesso')
+    username = current_app.config.get('MAIL_USERNAME')
+    password = current_app.config.get('MAIL_PASSWORD')
+    if lote:
+        send_emails_lote(lote, username, password)
+        flash(f'E-mail sendo enviado para {len(lote)} empresa(s) em segundo plano.', 'sucesso')
     if sem_email:
         flash(f'Sem e-mail cadastrado ({len(sem_email)}): {", ".join(sem_email)}.', 'aviso')
-    if falhas:
-        flash(f'Falha ao enviar para ({len(falhas)}): {", ".join(falhas)}.', 'erro')
 
 
 # ──────────────────────────────────────────────
