@@ -43,7 +43,7 @@ def _gerar_senha_temp():
 
 
 def _upload_financeiro(pasta):
-    """Salva arquivo PDF do request; retorna (key, nome_original, tamanho) ou None."""
+    """Salva arquivo PDF do request; retorna (key, nome_original, tamanho, dados) ou None."""
     arquivo = request.files.get('arquivo')
     if not arquivo or arquivo.filename == '':
         flash('Selecione um arquivo PDF.', 'erro')
@@ -59,7 +59,41 @@ def _upload_financeiro(pasta):
     empresa_id = request.form.get('empresa_id', '')
     key = f'{pasta}/{empresa_id}/{uuid.uuid4().hex}.pdf'
     storage.save(dados, key)
-    return key, arquivo.filename, len(dados)
+    return key, arquivo.filename, len(dados), dados
+
+
+def _enviar_arquivo_por_email(empresa_id, mes, ano, nome_arquivo, dados, tipo, anexos=None):
+    """Envia arquivo(s) por email para os contatos cadastrados da empresa."""
+    from app.models.email_empresa import EmailEmpresa
+    from app.utils.email import send_email, email_html
+
+    emails = [e.email for e in EmailEmpresa.query.filter_by(empresa_id=empresa_id).all()]
+    if not emails:
+        return
+
+    empresa = Empresa.query.get(empresa_id)
+    mes_nome = MESES_NOMES[mes - 1]
+    tipo_label = {'boleto': 'Boleto', 'recibo': 'Recibo de Pagamento', 'documento': 'Documento(s)'}.get(tipo, tipo)
+
+    if anexos is None:
+        ext = os.path.splitext(nome_arquivo)[1].lower() if nome_arquivo else '.pdf'
+        mime = 'application/pdf' if ext == '.pdf' else 'application/octet-stream'
+        anexos = [(nome_arquivo, dados, mime)]
+
+    n = len(anexos)
+    corpo = f"""
+      <p>Prezado(a),</p>
+      <p>Segue em anexo {'o' if n == 1 else 'os'} <strong>{tipo_label}</strong>
+         referente{'s' if n > 1 else ''} à competência de <strong>{mes_nome} de {ano}</strong>.</p>
+      <p>{'O arquivo também está' if n == 1 else 'Os arquivos também estão'} disponível{'is' if n > 1 else ''}
+         para download na seção correspondente do portal.</p>
+    """
+    send_email(
+        destinatarios=emails,
+        assunto=f'{tipo_label} — {mes_nome}/{ano} | {empresa.razao_social}',
+        corpo_html=email_html(corpo),
+        anexos=anexos,
+    )
 
 
 # ──────────────────────────────────────────────
@@ -461,7 +495,7 @@ def boleto_upload():
     if resultado is None:
         return redirect(url_for('area_admin.boletos'))
 
-    caminho, nome_original, tamanho = resultado
+    caminho, nome_original, tamanho, dados_arquivo = resultado
     db.session.add(Boleto(
         empresa_id=empresa_id,
         competencia_mes=mes,
@@ -472,6 +506,10 @@ def boleto_upload():
         enviado_por_id=current_user.id,
     ))
     db.session.commit()
+
+    if request.form.get('enviar_email') == 'on':
+        _enviar_arquivo_por_email(empresa_id, mes, ano, nome_original, dados_arquivo, 'boleto')
+
     flash('Boleto enviado com sucesso.', 'sucesso')
     return redirect(url_for('area_admin.boletos'))
 
@@ -645,7 +683,7 @@ def recibo_upload():
     if resultado is None:
         return redirect(url_for('area_admin.recibos'))
 
-    caminho, nome_original, tamanho = resultado
+    caminho, nome_original, tamanho, dados_arquivo = resultado
     db.session.add(Recibo(
         empresa_id=empresa_id,
         competencia_mes=mes,
@@ -656,6 +694,10 @@ def recibo_upload():
         enviado_por_id=current_user.id,
     ))
     db.session.commit()
+
+    if request.form.get('enviar_email') == 'on':
+        _enviar_arquivo_por_email(empresa_id, mes, ano, nome_original, dados_arquivo, 'recibo')
+
     flash('Recibo enviado com sucesso.', 'sucesso')
     return redirect(url_for('area_admin.recibos'))
 
@@ -842,6 +884,7 @@ def documento_upload():
         return redirect(url_for('area_admin.documentos'))
 
     enviados = 0
+    anexos_email = []
     for arq in arquivos:
         dados = arq.read()
         if len(dados) > 50 * 1024 * 1024:
@@ -859,6 +902,7 @@ def documento_upload():
             tamanho_bytes=len(dados),
             enviado_por_id=current_user.id,
         ))
+        anexos_email.append((arq.filename, dados, 'application/pdf'))
         enviados += 1
 
     if enviados:
@@ -873,6 +917,10 @@ def documento_upload():
             empresa_id=empresa_id,
         ))
         db.session.commit()
+
+        if request.form.get('enviar_email') == 'on':
+            _enviar_arquivo_por_email(empresa_id, mes, ano, None, None, 'documento', anexos_email)
+
         flash(f'{enviados} documento(s) enviado(s) com sucesso.', 'sucesso')
 
     return redirect(url_for('area_admin.documentos'))

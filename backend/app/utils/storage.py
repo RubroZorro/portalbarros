@@ -54,6 +54,17 @@ def delete(key: str) -> None:
         current_app.logger.warning(f'storage.delete falhou para {key!r}: {e}')
 
 
+def read(key: str) -> bytes:
+    """Retorna os bytes de um arquivo armazenado."""
+    if _use_r2():
+        resp = _client().get_object(Bucket=current_app.config['R2_BUCKET'], Key=key)
+        return resp['Body'].read()
+    else:
+        path = os.path.join(current_app.config['UPLOAD_FOLDER'], key)
+        with open(path, 'rb') as f:
+            return f.read()
+
+
 def serve(key: str, filename: str):
     """
     Retorna resposta Flask para download de um arquivo.
