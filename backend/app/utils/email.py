@@ -80,40 +80,60 @@ def send_email(
     return True
 
 
+def _send_batch(username: str, password: str, batch: list[dict]) -> None:
+    """Envia um lote de emails em uma única conexão SMTP com reconexão automática."""
+    server = None
+    try:
+        server = _smtp_connect(username, password)
+        for item in batch:
+            try:
+                corpo_text = _strip_html(item['corpo_html'])
+                msg = _build_msg(
+                    username,
+                    item['destinatarios'],
+                    item['assunto'],
+                    item['corpo_html'],
+                    corpo_text,
+                    item.get('anexos'),
+                )
+                server.sendmail(username, item['destinatarios'], msg.as_bytes())
+            except smtplib.SMTPServerDisconnected:
+                # Reconecta e tenta novamente
+                try:
+                    server = _smtp_connect(username, password)
+                    server.sendmail(username, item['destinatarios'], msg.as_bytes())
+                except Exception as e2:
+                    log.error(f'Falha após reconexão para {item["destinatarios"]}: {e2}')
+            except Exception as e:
+                log.error(f'Erro ao enviar para {item["destinatarios"]}: {e}')
+    except Exception as e:
+        log.error(f'Erro ao conectar SMTP (lote): {e}')
+    finally:
+        if server:
+            try:
+                server.quit()
+            except Exception:
+                pass
+
+
 def send_emails_lote(
     lote: list[dict],
     username: str,
     password: str,
 ) -> None:
     """
-    Envia múltiplos emails em uma única conexão SMTP (eficiente para lote).
-    Cada item do lote: {destinatarios, assunto, corpo_html, anexos}.
-    Roda em thread separada — não bloqueia o request.
+    Envia lote de emails em 2 conexões SMTP paralelas (≤30 cada).
+    Cada item: {destinatarios, assunto, corpo_html, anexos}.
+    Não bloqueia o request — processa em segundo plano.
     """
     if not lote:
         return
-
-    def _task():
-        try:
-            with _smtp_connect(username, password) as server:
-                for item in lote:
-                    try:
-                        corpo_text = _strip_html(item['corpo_html'])
-                        msg = _build_msg(
-                            username,
-                            item['destinatarios'],
-                            item['assunto'],
-                            item['corpo_html'],
-                            corpo_text,
-                            item.get('anexos'),
-                        )
-                        server.sendmail(username, item['destinatarios'], msg.as_bytes())
-                    except Exception as e:
-                        log.error(f'Erro ao enviar lote para {item["destinatarios"]}: {e}')
-        except Exception as e:
-            log.error(f'Erro conexão SMTP no lote: {e}')
-
-    _pool.submit(_task)
+    # Divide em 2 metades para usar as 2 conexões do pool em paralelo
+    mid = (len(lote) + 1) // 2
+    batches = [lote[:mid], lote[mid:]]
+    for batch in batches:
+        if batch:
+            _pool.submit(_send_batch, username, password, batch)
 
 
 # ──────────────────────────────────────────────
