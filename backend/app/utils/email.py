@@ -31,6 +31,11 @@ def send_email(
         return True
     except Exception as e:
         current_app.logger.error(f'Erro ao enviar email para {destinatarios}: {e}')
+        try:
+            from flask import flash as _flash
+            _flash(f'[DEBUG SMTP] {type(e).__name__}: {e}', 'erro')
+        except Exception:
+            pass
         return False
 
 
