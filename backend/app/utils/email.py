@@ -1,49 +1,63 @@
+import base64
+import json
 import logging
 import re
-import smtplib
+import urllib.request
+import urllib.error
 from concurrent.futures import ThreadPoolExecutor
-from email import encoders as email_encoders
-from email.mime.base import MIMEBase
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 
 from flask import current_app
 
-# Pool compartilhado: no máximo 2 conexões SMTP simultâneas
-_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix='smtp')
-
+_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix='email')
 log = logging.getLogger(__name__)
 
+SENDGRID_URL = 'https://api.sendgrid.com/v3/mail/send'
+
 
 # ──────────────────────────────────────────────
-# Helpers internos
+# Core SendGrid
 # ──────────────────────────────────────────────
 
-def _build_msg(username, destinatarios, assunto, corpo_html, corpo_text, anexos):
-    msg = MIMEMultipart('mixed')
-    msg['From'] = f'Portal Barros & Barros <{username}>'
-    msg['To'] = ', '.join(destinatarios)
-    msg['Subject'] = assunto
-    alt = MIMEMultipart('alternative')
-    alt.attach(MIMEText(corpo_text, 'plain', 'utf-8'))
-    alt.attach(MIMEText(corpo_html, 'html', 'utf-8'))
-    msg.attach(alt)
-    for filename, data, content_type in (anexos or []):
-        mime_type, mime_sub = content_type.split('/', 1)
-        part = MIMEBase(mime_type, mime_sub)
-        part.set_payload(data)
-        email_encoders.encode_base64(part)
-        part.add_header('Content-Disposition', 'attachment', filename=filename)
-        msg.attach(part)
-    return msg
+def _sendgrid_post(api_key: str, payload: dict) -> bool:
+    data = json.dumps(payload).encode('utf-8')
+    req = urllib.request.Request(SENDGRID_URL, data=data, method='POST')
+    req.add_header('Authorization', f'Bearer {api_key}')
+    req.add_header('Content-Type', 'application/json')
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return resp.status == 202
+    except urllib.error.HTTPError as e:
+        body = e.read().decode('utf-8', errors='replace')
+        log.error(f'SendGrid HTTP {e.code}: {body}')
+        return False
+    except Exception as e:
+        log.error(f'SendGrid erro: {e}')
+        return False
 
 
-def _smtp_connect(username, password):
-    server = smtplib.SMTP('smtp.gmail.com', 587, timeout=20)
-    server.ehlo()
-    server.starttls()
-    server.login(username, password)
-    return server
+def _build_payload(from_email: str, destinatarios: list[str],
+                   assunto: str, corpo_html: str, corpo_text: str,
+                   anexos: list[tuple] | None) -> dict:
+    payload = {
+        'personalizations': [{'to': [{'email': e} for e in destinatarios]}],
+        'from': {'email': from_email, 'name': 'Portal Barros & Barros'},
+        'subject': assunto,
+        'content': [
+            {'type': 'text/plain', 'value': corpo_text or ' '},
+            {'type': 'text/html',  'value': corpo_html},
+        ],
+    }
+    if anexos:
+        payload['attachments'] = [
+            {
+                'content': base64.b64encode(data).decode('ascii'),
+                'filename': filename,
+                'type': content_type,
+                'disposition': 'attachment',
+            }
+            for filename, data, content_type in anexos
+        ]
+    return payload
 
 
 # ──────────────────────────────────────────────
@@ -57,63 +71,25 @@ def send_email(
     anexos: list[tuple] | None = None,
 ) -> bool:
     """
-    Agenda envio de um email em segundo plano (não bloqueia o request).
+    Agenda envio de um email via SendGrid em segundo plano.
     Retorna True se credenciais configuradas, False caso contrário.
     """
-    username = current_app.config.get('MAIL_USERNAME')
-    password = current_app.config.get('MAIL_PASSWORD')
-    if not username or not password:
-        current_app.logger.warning('MAIL_USERNAME/PASSWORD não configurado.')
+    api_key   = current_app.config.get('SENDGRID_API_KEY')
+    from_email = current_app.config.get('MAIL_USERNAME', 'barroscontabil@gmail.com')
+    if not api_key:
+        current_app.logger.warning('SENDGRID_API_KEY não configurada — email não enviado.')
         return False
 
     corpo_text = _strip_html(corpo_html)
+    payload = _build_payload(from_email, destinatarios, assunto, corpo_html, corpo_text, anexos)
 
     def _task():
-        try:
-            with _smtp_connect(username, password) as server:
-                msg = _build_msg(username, destinatarios, assunto, corpo_html, corpo_text, anexos)
-                server.sendmail(username, destinatarios, msg.as_bytes())
-        except Exception as e:
-            log.error(f'Erro SMTP para {destinatarios}: {e}')
+        ok = _sendgrid_post(api_key, payload)
+        if not ok:
+            log.error(f'Falha SendGrid para {destinatarios} | assunto: {assunto}')
 
     _pool.submit(_task)
     return True
-
-
-def _send_batch(username: str, password: str, batch: list[dict]) -> None:
-    """Envia um lote de emails em uma única conexão SMTP com reconexão automática."""
-    server = None
-    try:
-        server = _smtp_connect(username, password)
-        for item in batch:
-            try:
-                corpo_text = _strip_html(item['corpo_html'])
-                msg = _build_msg(
-                    username,
-                    item['destinatarios'],
-                    item['assunto'],
-                    item['corpo_html'],
-                    corpo_text,
-                    item.get('anexos'),
-                )
-                server.sendmail(username, item['destinatarios'], msg.as_bytes())
-            except smtplib.SMTPServerDisconnected:
-                # Reconecta e tenta novamente
-                try:
-                    server = _smtp_connect(username, password)
-                    server.sendmail(username, item['destinatarios'], msg.as_bytes())
-                except Exception as e2:
-                    log.error(f'Falha após reconexão para {item["destinatarios"]}: {e2}')
-            except Exception as e:
-                log.error(f'Erro ao enviar para {item["destinatarios"]}: {e}')
-    except Exception as e:
-        log.error(f'Erro ao conectar SMTP (lote): {e}')
-    finally:
-        if server:
-            try:
-                server.quit()
-            except Exception:
-                pass
 
 
 def send_emails_lote(
@@ -122,22 +98,49 @@ def send_emails_lote(
     password: str,
 ) -> None:
     """
-    Envia lote de emails em 2 conexões SMTP paralelas (≤30 cada).
+    Envia lote de emails via SendGrid em 2 threads paralelas.
     Cada item: {destinatarios, assunto, corpo_html, anexos}.
-    Não bloqueia o request — processa em segundo plano.
+    Não bloqueia o request.
     """
     if not lote:
         return
-    # Divide em 2 metades para usar as 2 conexões do pool em paralelo
+
+    # api_key vem de username (reutilizamos a assinatura; password ignorado)
+    # Na prática chamamos com current_app.config direto
+    from flask import current_app as _app
+    api_key    = _app.config.get('SENDGRID_API_KEY', '')
+    from_email = _app.config.get('MAIL_USERNAME', 'barroscontabil@gmail.com')
+
+    if not api_key:
+        log.warning('SENDGRID_API_KEY não configurada — lote não enviado.')
+        return
+
+    # Divide em 2 metades para as 2 threads do pool
     mid = (len(lote) + 1) // 2
     batches = [lote[:mid], lote[mid:]]
+
+    def _batch_task(batch):
+        for item in batch:
+            corpo_text = _strip_html(item['corpo_html'])
+            payload = _build_payload(
+                from_email,
+                item['destinatarios'],
+                item['assunto'],
+                item['corpo_html'],
+                corpo_text,
+                item.get('anexos'),
+            )
+            ok = _sendgrid_post(api_key, payload)
+            if not ok:
+                log.error(f'Falha SendGrid lote para {item["destinatarios"]}')
+
     for batch in batches:
         if batch:
-            _pool.submit(_send_batch, username, password, batch)
+            _pool.submit(_batch_task, batch)
 
 
 # ──────────────────────────────────────────────
-# Templates de email
+# Templates
 # ──────────────────────────────────────────────
 
 def email_cabecalho(titulo: str, competencia: str) -> str:
