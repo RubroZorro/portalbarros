@@ -1,6 +1,42 @@
+import smtplib
+import threading
+from email import encoders as email_encoders
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
 from flask import current_app
-from flask_mail import Message
-from app.extensions import mail
+
+
+def _enviar_smtp(username, password, destinatarios, assunto, corpo_html, corpo_text, anexos):
+    """Envia via smtplib com timeout — roda em thread separada."""
+    try:
+        msg = MIMEMultipart('mixed')
+        msg['From'] = f'Portal Barros & Barros <{username}>'
+        msg['To'] = ', '.join(destinatarios)
+        msg['Subject'] = assunto
+
+        alt = MIMEMultipart('alternative')
+        alt.attach(MIMEText(corpo_text, 'plain', 'utf-8'))
+        alt.attach(MIMEText(corpo_html, 'html', 'utf-8'))
+        msg.attach(alt)
+
+        for filename, data, content_type in (anexos or []):
+            mime_type, mime_sub = content_type.split('/', 1)
+            part = MIMEBase(mime_type, mime_sub)
+            part.set_payload(data)
+            email_encoders.encode_base64(part)
+            part.add_header('Content-Disposition', 'attachment', filename=filename)
+            msg.attach(part)
+
+        with smtplib.SMTP('smtp.gmail.com', 587, timeout=20) as server:
+            server.ehlo()
+            server.starttls()
+            server.login(username, password)
+            server.sendmail(username, destinatarios, msg.as_bytes())
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f'Erro SMTP ao enviar para {destinatarios}: {e}')
 
 
 def send_email(
@@ -10,33 +46,23 @@ def send_email(
     anexos: list[tuple] | None = None,
 ) -> bool:
     """
-    Envia email via Gmail SMTP.
-    anexos: lista de (filename, bytes, content_type)
-    Retorna True se enviou, False se email não configurado ou erro.
+    Dispara envio de email em thread separada (não bloqueia o request).
+    Retorna True se as credenciais estão configuradas, False caso contrário.
     """
-    if not current_app.config.get('MAIL_USERNAME'):
-        current_app.logger.warning('MAIL_USERNAME não configurado — email não enviado.')
+    username = current_app.config.get('MAIL_USERNAME')
+    password = current_app.config.get('MAIL_PASSWORD')
+    if not username or not password:
+        current_app.logger.warning('MAIL_USERNAME/PASSWORD não configurado — email não enviado.')
         return False
 
-    try:
-        msg = Message(
-            subject=assunto,
-            recipients=destinatarios,
-            html=corpo_html,
-            body=_strip_html(corpo_html),
-        )
-        for filename, data, content_type in (anexos or []):
-            msg.attach(filename, content_type, data)
-        mail.send(msg)
-        return True
-    except Exception as e:
-        current_app.logger.error(f'Erro ao enviar email para {destinatarios}: {e}')
-        try:
-            from flask import flash as _flash
-            _flash(f'[DEBUG SMTP] {type(e).__name__}: {e}', 'erro')
-        except Exception:
-            pass
-        return False
+    corpo_text = _strip_html(corpo_html)
+    t = threading.Thread(
+        target=_enviar_smtp,
+        args=(username, password, destinatarios, assunto, corpo_html, corpo_text, anexos),
+        daemon=True,
+    )
+    t.start()
+    return True
 
 
 def email_cabecalho(titulo: str, competencia: str) -> str:
