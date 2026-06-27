@@ -34,6 +34,20 @@ def send_email(
         return False
 
 
+def email_cabecalho(titulo: str, competencia: str) -> str:
+    """Bloco de cabeçalho navy com título e competência — inserir antes do corpo."""
+    return (
+        '<div style="background:linear-gradient(135deg,#1B2D6B 0%,#243d8f 100%);'
+        'border-radius:10px;padding:28px 24px;margin-bottom:28px;">'
+        '<div style="font-size:0.6rem;font-weight:700;letter-spacing:0.2em;'
+        'text-transform:uppercase;color:#C9A227;margin-bottom:10px;">'
+        'Barros &amp; Barros Contabilidade</div>'
+        f'<div style="color:#ffffff;font-size:1.25rem;font-weight:700;line-height:1.25;">{titulo}</div>'
+        f'<div style="color:rgba(255,255,255,0.6);font-size:0.8rem;margin-top:6px;">{competencia}</div>'
+        '</div>'
+    )
+
+
 def email_html(corpo: str) -> str:
     """Envolve o corpo em template com rodapé Barros & Barros."""
     return f"""

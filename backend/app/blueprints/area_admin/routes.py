@@ -62,6 +62,44 @@ def _upload_financeiro(pasta):
     return key, arquivo.filename, len(dados), dados
 
 
+def _corpo_email(tipo: str, n: int, mes_nome: str, ano: int) -> tuple[str, str, str]:
+    """Retorna (titulo, assunto_prefixo, corpo_html) para cada tipo de envio."""
+    comp = f'Competência: {mes_nome}/{ano}'
+    if tipo == 'boleto':
+        titulo = 'Boleto de Honorários'
+        corpo = (
+            '<p>Prezado(a),</p>'
+            f'<p>Encaminhamos em anexo o <strong>boleto</strong> referente aos honorários '
+            f'contábeis da competência de <strong>{mes_nome} de {ano}</strong>.</p>'
+            '<p>Pedimos que o pagamento seja realizado até a data de vencimento '
+            'indicada no documento.</p>'
+            '<p>Em caso de dúvidas, entre em contato pelo WhatsApp ou acesse o portal.</p>'
+        )
+    elif tipo == 'recibo':
+        titulo = 'Recibo de Pagamento'
+        corpo = (
+            '<p>Prezado(a),</p>'
+            f'<p>Segue em anexo o <strong>recibo de pagamento</strong> referente à '
+            f'competência de <strong>{mes_nome} de {ano}</strong>, confirmando o '
+            'recebimento dos honorários contábeis.</p>'
+            '<p>Guarde este documento para o seu controle financeiro.</p>'
+        )
+    else:
+        titulo = 'Documentos Fiscais'
+        arqs = 'o documento fiscal' if n == 1 else f'os documentos fiscais ({n} arquivos)'
+        ref = 'referente' if n == 1 else 'referentes'
+        disp = 'O arquivo também está disponível' if n == 1 else 'Os arquivos também estão disponíveis'
+        corpo = (
+            '<p>Prezado(a),</p>'
+            f'<p>Disponibilizamos em anexo {arqs} {ref} à competência de '
+            f'<strong>{mes_nome} de {ano}</strong>.</p>'
+            f'<p>{disp} para download na seção <strong>Documentos</strong> do portal '
+            'a qualquer momento.</p>'
+        )
+    from app.utils.email import email_cabecalho
+    return titulo, email_cabecalho(titulo, comp) + corpo
+
+
 def _enviar_arquivo_por_email(empresa_id, mes, ano, nome_arquivo, dados, tipo, anexos=None):
     """Envia arquivo(s) por email para os contatos cadastrados da empresa."""
     from app.models.email_empresa import EmailEmpresa
@@ -73,24 +111,16 @@ def _enviar_arquivo_por_email(empresa_id, mes, ano, nome_arquivo, dados, tipo, a
 
     empresa = Empresa.query.get(empresa_id)
     mes_nome = MESES_NOMES[mes - 1]
-    tipo_label = {'boleto': 'Boleto', 'recibo': 'Recibo de Pagamento', 'documento': 'Documento(s)'}.get(tipo, tipo)
 
     if anexos is None:
         ext = os.path.splitext(nome_arquivo)[1].lower() if nome_arquivo else '.pdf'
         mime = 'application/pdf' if ext == '.pdf' else 'application/octet-stream'
         anexos = [(nome_arquivo, dados, mime)]
 
-    n = len(anexos)
-    corpo = f"""
-      <p>Prezado(a),</p>
-      <p>Segue em anexo {'o' if n == 1 else 'os'} <strong>{tipo_label}</strong>
-         referente{'s' if n > 1 else ''} à competência de <strong>{mes_nome} de {ano}</strong>.</p>
-      <p>{'O arquivo também está' if n == 1 else 'Os arquivos também estão'} disponível{'is' if n > 1 else ''}
-         para download na seção correspondente do portal.</p>
-    """
+    titulo, corpo = _corpo_email(tipo, len(anexos), mes_nome, ano)
     send_email(
         destinatarios=emails,
-        assunto=f'{tipo_label} — {mes_nome}/{ano} | {empresa.razao_social}',
+        assunto=f'{titulo} — {mes_nome}/{ano} | {empresa.razao_social}',
         corpo_html=email_html(corpo),
         anexos=anexos,
     )
@@ -101,23 +131,14 @@ def _enviar_lote_por_email(emails_lote: dict, mes_nome: str, ano: int, tipo: str
     from app.models.email_empresa import EmailEmpresa
     from app.utils.email import send_email, email_html
 
-    tipo_label = {'boleto': 'Boleto', 'recibo': 'Recibo de Pagamento', 'documento': 'Documento(s)'}.get(tipo, tipo)
-
     for empresa_id, info in emails_lote.items():
         emails = [e.email for e in EmailEmpresa.query.filter_by(empresa_id=empresa_id).all()]
         if not emails:
             continue
-        n = len(info['arquivos'])
-        corpo = f"""
-          <p>Prezado(a),</p>
-          <p>Segue em anexo {'o' if n == 1 else 'os'} <strong>{tipo_label}</strong>
-             referente{'s' if n > 1 else ''} à competência de <strong>{mes_nome} de {ano}</strong>.</p>
-          <p>{'O arquivo também está' if n == 1 else 'Os arquivos também estão'} disponível{'is' if n > 1 else ''}
-             para download na seção correspondente do portal.</p>
-        """
+        titulo, corpo = _corpo_email(tipo, len(info['arquivos']), mes_nome, ano)
         send_email(
             destinatarios=emails,
-            assunto=f'{tipo_label} — {mes_nome}/{ano} | {info["razao"]}',
+            assunto=f'{titulo} — {mes_nome}/{ano} | {info["razao"]}',
             corpo_html=email_html(corpo),
             anexos=info['arquivos'],
         )
