@@ -96,6 +96,33 @@ def _enviar_arquivo_por_email(empresa_id, mes, ano, nome_arquivo, dados, tipo, a
     )
 
 
+def _enviar_lote_por_email(emails_lote: dict, mes_nome: str, ano: int, tipo: str):
+    """Envia emails em lote após commit — um email por empresa com seus anexos."""
+    from app.models.email_empresa import EmailEmpresa
+    from app.utils.email import send_email, email_html
+
+    tipo_label = {'boleto': 'Boleto', 'recibo': 'Recibo de Pagamento', 'documento': 'Documento(s)'}.get(tipo, tipo)
+
+    for empresa_id, info in emails_lote.items():
+        emails = [e.email for e in EmailEmpresa.query.filter_by(empresa_id=empresa_id).all()]
+        if not emails:
+            continue
+        n = len(info['arquivos'])
+        corpo = f"""
+          <p>Prezado(a),</p>
+          <p>Segue em anexo {'o' if n == 1 else 'os'} <strong>{tipo_label}</strong>
+             referente{'s' if n > 1 else ''} à competência de <strong>{mes_nome} de {ano}</strong>.</p>
+          <p>{'O arquivo também está' if n == 1 else 'Os arquivos também estão'} disponível{'is' if n > 1 else ''}
+             para download na seção correspondente do portal.</p>
+        """
+        send_email(
+            destinatarios=emails,
+            assunto=f'{tipo_label} — {mes_nome}/{ano} | {info["razao"]}',
+            corpo_html=email_html(corpo),
+            anexos=info['arquivos'],
+        )
+
+
 # ──────────────────────────────────────────────
 # DASHBOARD
 # ──────────────────────────────────────────────
@@ -540,8 +567,10 @@ def boleto_lote():
     CNPJ_RE = re.compile(r'CNPJ/CPF:\s*(\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})')
     CNPJ_ESCRITORIO = '03.997.535/0001-77'
 
+    enviar_email = request.form.get('enviar_email') == 'on'
     enviados, sem_cadastro, com_erro = [], [], []
     empresas_notificar = {}  # empresa_id → razao_social
+    emails_lote: dict[int, dict] = {}  # empresa_id → {razao, arquivos}
 
     for arq in arquivos:
         if not arq or not arq.filename:
@@ -601,6 +630,9 @@ def boleto_lote():
 
         empresas_notificar[empresa.id] = empresa.razao_social
         enviados.append({'empresa': empresa.razao_social, 'nome': arq.filename, 'acao': acao})
+        if enviar_email:
+            emails_lote.setdefault(empresa.id, {'razao': empresa.razao_social, 'arquivos': []})
+            emails_lote[empresa.id]['arquivos'].append((arq.filename, data, 'application/pdf'))
 
     mes_nome = MESES_NOMES[mes - 1]
     for empresa_id in empresas_notificar:
@@ -615,6 +647,9 @@ def boleto_lote():
         ))
 
     db.session.commit()
+
+    if enviar_email:
+        _enviar_lote_por_email(emails_lote, mes_nome, ano, 'boleto')
 
     return render_template('area_admin/boletos_lote_resultado.html',
         active='boletos',
@@ -728,8 +763,10 @@ def recibo_lote():
     CNPJ_RE = re.compile(r'CNPJ/CPF:\s*(\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})')
     CNPJ_ESCRITORIO = '03.997.535/0001-77'
 
+    enviar_email = request.form.get('enviar_email') == 'on'
     enviados, sem_cadastro, com_erro = [], [], []
     empresas_notificar = {}
+    emails_lote: dict[int, dict] = {}
 
     for arq in arquivos:
         if not arq or not arq.filename:
@@ -789,6 +826,9 @@ def recibo_lote():
 
         empresas_notificar[empresa.id] = empresa.razao_social
         enviados.append({'empresa': empresa.razao_social, 'nome': arq.filename, 'acao': acao})
+        if enviar_email:
+            emails_lote.setdefault(empresa.id, {'razao': empresa.razao_social, 'arquivos': []})
+            emails_lote[empresa.id]['arquivos'].append((arq.filename, data, 'application/pdf'))
 
     mes_nome = MESES_NOMES[mes - 1]
     for empresa_id in empresas_notificar:
@@ -803,6 +843,9 @@ def recibo_lote():
         ))
 
     db.session.commit()
+
+    if enviar_email:
+        _enviar_lote_por_email(emails_lote, mes_nome, ano, 'recibo')
 
     return render_template('area_admin/recibos_lote_resultado.html',
         active='recibos',
@@ -940,12 +983,14 @@ def documento_lote():
         flash('Mês inválido.', 'erro')
         return redirect(url_for('area_admin.documentos'))
 
+    enviar_email = request.form.get('enviar_email') == 'on'
     mes_nome = MESES_NOMES[mes - 1]
     enviados_map: dict[int, dict] = {}    # empresa_id → {empresa, arquivos}
     pulados_map: dict[int, dict] = {}     # empresa_id → {empresa, arquivos}
     sem_cadastro_map: dict[str, dict] = {}  # pasta → {pasta, arquivos}
     com_erro: list[dict] = []
     empresas_notificar: dict[int, str] = {}
+    emails_lote: dict[int, dict] = {}
 
     # Agrupa arquivos por subpasta (empresa)
     grupos: dict[str, list] = {}
@@ -1004,6 +1049,10 @@ def documento_lote():
             ))
             empresas_notificar[empresa.id] = empresa.razao_social
             entry['arquivos'].append(arq.filename.split('/')[-1])
+            if enviar_email:
+                emails_lote.setdefault(empresa.id, {'razao': empresa.razao_social, 'arquivos': []})
+                emails_lote[empresa.id]['arquivos'].append(
+                    (arq.filename.split('/')[-1], dados, 'application/pdf'))
 
     enviados = list(enviados_map.values())
     pulados = list(pulados_map.values())
@@ -1021,6 +1070,9 @@ def documento_lote():
         ))
 
     db.session.commit()
+
+    if enviar_email:
+        _enviar_lote_por_email(emails_lote, mes_nome, ano, 'documento')
 
     return render_template('area_admin/documentos_lote_resultado.html',
         active='documentos',

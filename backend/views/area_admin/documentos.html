@@ -94,7 +94,7 @@
       Selecione a pasta da competência (ex: <em>Maio 2026/</em>). Cada subpasta deve ter o nome exato da empresa cadastrada.
       Empresas não encontradas serão listadas no log. Competências já existentes são <strong>puladas</strong> (não substituídas).
     </p>
-    <form method="POST" action="{{ url_for('area_admin.documento_lote') }}" enctype="multipart/form-data">
+    <form method="POST" action="{{ url_for('area_admin.documento_lote') }}" enctype="multipart/form-data" id="form-doc-lote">
       <div class="lote-grid">
         <div>
           <label class="field-label">Mês <span class="req">*</span></label>
@@ -124,6 +124,10 @@
           <button type="submit" class="btn btn-primary" style="width:100%;">Processar lote</button>
         </div>
       </div>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:0.83rem;color:var(--text);cursor:pointer;width:fit-content;">
+        <input type="checkbox" name="enviar_email" style="width:15px;height:15px;accent-color:var(--navy);">
+        Enviar cópia por e-mail para cada empresa
+      </label>
     </form>
   </div>
 </div>
@@ -229,5 +233,25 @@ function atualizarLoteDocs(input) {
     files.length === 0 ? 'Selecionar pasta...' :
     pasta + '  (' + empresas.size + ' empresa' + (empresas.size > 1 ? 's' : '') + '  ·  ' + files.length + ' arquivo' + (files.length > 1 ? 's' : '') + ')';
 }
+
+document.querySelector('#tab-unitario form').addEventListener('submit', function(e) {
+  var chk = this.querySelector('input[name="enviar_email"]');
+  if (!chk || !chk.checked) return;
+  var sel = this.querySelector('select[name="empresa_id"]');
+  var nome = sel.options[sel.selectedIndex].text;
+  if (!confirm(
+    'Será enviada uma cópia dos documentos por e-mail para os contatos cadastrados de:\n\n"' + nome + '"\n\n' +
+    'Os arquivos continuarão sendo publicados no portal normalmente.\n\nContinuar?'
+  )) { e.preventDefault(); }
+});
+
+document.getElementById('form-doc-lote').addEventListener('submit', function(e) {
+  var chk = this.querySelector('input[name="enviar_email"]');
+  if (!chk || !chk.checked) return;
+  if (!confirm(
+    'Será enviada uma cópia dos documentos por e-mail para os contatos cadastrados de todas as empresas identificadas nas subpastas.\n\n' +
+    'Os arquivos continuarão sendo publicados no portal normalmente.\n\nContinuar?'
+  )) { e.preventDefault(); }
+});
 </script>
 {% endblock %}

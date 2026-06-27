@@ -94,7 +94,7 @@
       Selecione a pasta de recibos (ex: <em>abril/recibos</em>). O sistema extrai o CNPJ de cada PDF e identifica a empresa automaticamente.
       Um comunicado é disparado para cada empresa que receber recibo.
     </p>
-    <form method="POST" action="{{ url_for('area_admin.recibo_lote') }}" enctype="multipart/form-data">
+    <form method="POST" action="{{ url_for('area_admin.recibo_lote') }}" enctype="multipart/form-data" id="form-recibo-lote">
       <div class="lote-grid">
         <div>
           <label class="field-label">Mês (competência) <span class="req">*</span></label>
@@ -124,6 +124,10 @@
           <button type="submit" class="btn btn-primary" style="width:100%;">Processar lote</button>
         </div>
       </div>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:0.83rem;color:var(--text);cursor:pointer;width:fit-content;">
+        <input type="checkbox" name="enviar_email" style="width:15px;height:15px;accent-color:var(--navy);">
+        Enviar cópia por e-mail para cada empresa
+      </label>
     </form>
   </div>
 </div>
@@ -211,5 +215,25 @@ function atualizarLoteLabelRecibo(input) {
     pdfs.length === 0 ? 'Selecionar pasta de recibos...' :
     pasta + '  (' + pdfs.length + ' PDF' + (pdfs.length > 1 ? 's' : '') + ')';
 }
+
+document.querySelector('#tab-unitario form').addEventListener('submit', function(e) {
+  var chk = this.querySelector('input[name="enviar_email"]');
+  if (!chk || !chk.checked) return;
+  var sel = this.querySelector('select[name="empresa_id"]');
+  var nome = sel.options[sel.selectedIndex].text;
+  if (!confirm(
+    'Será enviada uma cópia do recibo por e-mail para os contatos cadastrados de:\n\n"' + nome + '"\n\n' +
+    'O arquivo continuará sendo publicado no portal normalmente.\n\nContinuar?'
+  )) { e.preventDefault(); }
+});
+
+document.getElementById('form-recibo-lote').addEventListener('submit', function(e) {
+  var chk = this.querySelector('input[name="enviar_email"]');
+  if (!chk || !chk.checked) return;
+  if (!confirm(
+    'Será enviada uma cópia do recibo por e-mail para os contatos cadastrados de todas as empresas identificadas nos PDFs.\n\n' +
+    'Os arquivos continuarão sendo publicados no portal normalmente.\n\nContinuar?'
+  )) { e.preventDefault(); }
+});
 </script>
 {% endblock %}
