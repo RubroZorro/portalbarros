@@ -62,49 +62,12 @@ def _upload_financeiro(pasta):
     return key, arquivo.filename, len(dados), dados
 
 
-def _corpo_email(tipo: str, n: int, mes_nome: str, ano: int) -> tuple[str, str, str]:
-    """Retorna (titulo, assunto_prefixo, corpo_html) para cada tipo de envio."""
-    comp = f'Competência: {mes_nome}/{ano}'
-    if tipo == 'boleto':
-        titulo = 'Boleto de Honorários'
-        corpo = (
-            '<p>Prezado(a),</p>'
-            f'<p>Encaminhamos em anexo o <strong>boleto</strong> referente aos honorários '
-            f'contábeis da competência de <strong>{mes_nome} de {ano}</strong>.</p>'
-            '<p>Pedimos que o pagamento seja realizado até a data de vencimento '
-            'indicada no documento.</p>'
-            '<p>Em caso de dúvidas, entre em contato pelo WhatsApp ou acesse o portal.</p>'
-        )
-    elif tipo == 'recibo':
-        titulo = 'Recibo de Pagamento'
-        corpo = (
-            '<p>Prezado(a),</p>'
-            f'<p>Segue em anexo o <strong>recibo de pagamento</strong> referente à '
-            f'competência de <strong>{mes_nome} de {ano}</strong>, confirmando o '
-            'recebimento dos honorários contábeis.</p>'
-            '<p>Guarde este documento para o seu controle financeiro.</p>'
-        )
-    else:
-        titulo = 'Documentos Fiscais'
-        arqs = 'o documento fiscal' if n == 1 else f'os documentos fiscais ({n} arquivos)'
-        ref = 'referente' if n == 1 else 'referentes'
-        disp = 'O arquivo também está disponível' if n == 1 else 'Os arquivos também estão disponíveis'
-        corpo = (
-            '<p>Prezado(a),</p>'
-            f'<p>Disponibilizamos em anexo {arqs} {ref} à competência de '
-            f'<strong>{mes_nome} de {ano}</strong>.</p>'
-            f'<p>{disp} para download na seção <strong>Documentos</strong> do portal '
-            'a qualquer momento.</p>'
-        )
-    from app.utils.email import email_cabecalho
-    return titulo, email_cabecalho(titulo, comp) + corpo
 
 
 def _enviar_arquivo_por_email(empresa_id, mes, ano, nome_arquivo, dados, tipo, anexos=None):
     """Envia arquivo(s) por email para os contatos cadastrados da empresa."""
-    from flask import flash
     from app.models.email_empresa import EmailEmpresa
-    from app.utils.email import send_email, email_html
+    from app.utils.email import send_email_tipo
 
     emails = [e.email for e in EmailEmpresa.query.filter_by(empresa_id=empresa_id).all()]
     empresa = Empresa.query.get(empresa_id)
@@ -115,28 +78,26 @@ def _enviar_arquivo_por_email(empresa_id, mes, ano, nome_arquivo, dados, tipo, a
 
     mes_nome = MESES_NOMES[mes - 1]
     if anexos is None:
-        ext = os.path.splitext(nome_arquivo)[1].lower() if nome_arquivo else '.pdf'
-        mime = 'application/pdf' if ext == '.pdf' else 'application/octet-stream'
+        mime = 'application/pdf'
         anexos = [(nome_arquivo, dados, mime)]
 
-    titulo, corpo = _corpo_email(tipo, len(anexos), mes_nome, ano)
-    ok = send_email(
+    ok = send_email_tipo(
         destinatarios=emails,
-        assunto=f'{titulo} — {mes_nome}/{ano} | {empresa.razao_social}',
-        corpo_html=email_html(corpo),
+        tipo=tipo,
+        competencia=f'{mes_nome}/{ano}',
+        razao_social=empresa.razao_social,
         anexos=anexos,
     )
     if ok:
-        flash(f'E-mail enviado para: {", ".join(emails)}.', 'sucesso')
+        flash(f'E-mail sendo enviado para: {", ".join(emails)}.', 'sucesso')
     else:
-        flash('Falha ao enviar e-mail. Verifique as configurações SMTP.', 'aviso')
+        flash('BREVO_API_KEY não configurada — e-mail não enviado.', 'aviso')
 
 
 def _enviar_lote_por_email(emails_lote: dict, mes_nome: str, ano: int, tipo: str):
-    """Envia emails em lote em segundo plano — uma conexão SMTP para todas as empresas."""
-    from flask import flash
+    """Envia emails em lote em segundo plano via Brevo."""
     from app.models.email_empresa import EmailEmpresa
-    from app.utils.email import send_emails_lote, email_html
+    from app.utils.email import send_emails_lote_tipo
 
     lote = []
     sem_email = []
@@ -145,18 +106,14 @@ def _enviar_lote_por_email(emails_lote: dict, mes_nome: str, ano: int, tipo: str
         if not emails:
             sem_email.append(info['razao'])
             continue
-        titulo, corpo = _corpo_email(tipo, len(info['arquivos']), mes_nome, ano)
         lote.append({
             'destinatarios': emails,
-            'assunto': f'{titulo} — {mes_nome}/{ano} | {info["razao"]}',
-            'corpo_html': email_html(corpo),
-            'anexos': info['arquivos'],
+            'razao': info['razao'],
+            'arquivos': info['arquivos'],
         })
 
-    username = current_app.config.get('MAIL_USERNAME')
-    password = current_app.config.get('MAIL_PASSWORD')
     if lote:
-        send_emails_lote(lote, username, password)
+        send_emails_lote_tipo(lote, tipo, mes_nome, ano)
         flash(f'E-mail sendo enviado para {len(lote)} empresa(s) em segundo plano.', 'sucesso')
     if sem_email:
         flash(f'Sem e-mail cadastrado ({len(sem_email)}): {", ".join(sem_email)}.', 'aviso')

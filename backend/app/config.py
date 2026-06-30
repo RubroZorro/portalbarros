@@ -16,7 +16,7 @@ class Config:
 
     # Brevo
     BREVO_API_KEY = os.environ.get('BREVO_API_KEY')
-    MAIL_USERNAME    = os.environ.get('MAIL_USERNAME', 'barroscontabil@gmail.com')  # remetente
+    MAIL_FROM = os.environ.get('MAIL_FROM', 'portal@barrosebarroscontabilidade.com.br')
 
     # Flask-WTF
     WTF_CSRF_ENABLED = True
