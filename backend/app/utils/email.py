@@ -11,27 +11,28 @@ from flask import current_app
 _pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix='email')
 log = logging.getLogger(__name__)
 
-SENDGRID_URL = 'https://api.sendgrid.com/v3/mail/send'
+BREVO_URL = 'https://api.brevo.com/v3/smtp/email'
 
 
 # ──────────────────────────────────────────────
-# Core SendGrid
+# Core Brevo
 # ──────────────────────────────────────────────
 
-def _sendgrid_post(api_key: str, payload: dict) -> bool:
+def _brevo_post(api_key: str, payload: dict) -> bool:
     data = json.dumps(payload).encode('utf-8')
-    req = urllib.request.Request(SENDGRID_URL, data=data, method='POST')
-    req.add_header('Authorization', f'Bearer {api_key}')
+    req = urllib.request.Request(BREVO_URL, data=data, method='POST')
+    req.add_header('api-key', api_key)
     req.add_header('Content-Type', 'application/json')
+    req.add_header('Accept', 'application/json')
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
-            return resp.status == 202
+            return resp.status in (200, 201)
     except urllib.error.HTTPError as e:
         body = e.read().decode('utf-8', errors='replace')
-        log.error(f'SendGrid HTTP {e.code}: {body}')
+        log.error(f'Brevo HTTP {e.code}: {body}')
         return False
     except Exception as e:
-        log.error(f'SendGrid erro: {e}')
+        log.error(f'Brevo erro: {e}')
         return False
 
 
@@ -39,21 +40,17 @@ def _build_payload(from_email: str, destinatarios: list[str],
                    assunto: str, corpo_html: str, corpo_text: str,
                    anexos: list[tuple] | None) -> dict:
     payload = {
-        'personalizations': [{'to': [{'email': e} for e in destinatarios]}],
-        'from': {'email': from_email, 'name': 'Portal Barros & Barros'},
+        'sender': {'name': 'Portal Barros & Barros', 'email': from_email},
+        'to': [{'email': e} for e in destinatarios],
         'subject': assunto,
-        'content': [
-            {'type': 'text/plain', 'value': corpo_text or ' '},
-            {'type': 'text/html',  'value': corpo_html},
-        ],
+        'htmlContent': corpo_html,
+        'textContent': corpo_text or ' ',
     }
     if anexos:
-        payload['attachments'] = [
+        payload['attachment'] = [
             {
+                'name': filename,
                 'content': base64.b64encode(data).decode('ascii'),
-                'filename': filename,
-                'type': content_type,
-                'disposition': 'attachment',
             }
             for filename, data, content_type in anexos
         ]
@@ -74,17 +71,17 @@ def send_email(
     Agenda envio de um email via SendGrid em segundo plano.
     Retorna True se credenciais configuradas, False caso contrário.
     """
-    api_key   = current_app.config.get('SENDGRID_API_KEY')
+    api_key   = current_app.config.get('BREVO_API_KEY')
     from_email = current_app.config.get('MAIL_USERNAME', 'barroscontabil@gmail.com')
     if not api_key:
-        current_app.logger.warning('SENDGRID_API_KEY não configurada — email não enviado.')
+        current_app.logger.warning('BREVO_API_KEY não configurada — email não enviado.')
         return False
 
     corpo_text = _strip_html(corpo_html)
     payload = _build_payload(from_email, destinatarios, assunto, corpo_html, corpo_text, anexos)
 
     def _task():
-        ok = _sendgrid_post(api_key, payload)
+        ok = _brevo_post(api_key, payload)
         if not ok:
             log.error(f'Falha SendGrid para {destinatarios} | assunto: {assunto}')
 
@@ -108,11 +105,11 @@ def send_emails_lote(
     # api_key vem de username (reutilizamos a assinatura; password ignorado)
     # Na prática chamamos com current_app.config direto
     from flask import current_app as _app
-    api_key    = _app.config.get('SENDGRID_API_KEY', '')
+    api_key    = _app.config.get('BREVO_API_KEY', '')
     from_email = _app.config.get('MAIL_USERNAME', 'barroscontabil@gmail.com')
 
     if not api_key:
-        log.warning('SENDGRID_API_KEY não configurada — lote não enviado.')
+        log.warning('BREVO_API_KEY não configurada — lote não enviado.')
         return
 
     # Divide em 2 metades para as 2 threads do pool
@@ -130,7 +127,7 @@ def send_emails_lote(
                 corpo_text,
                 item.get('anexos'),
             )
-            ok = _sendgrid_post(api_key, payload)
+            ok = _brevo_post(api_key, payload)
             if not ok:
                 log.error(f'Falha SendGrid lote para {item["destinatarios"]}')
 

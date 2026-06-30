@@ -14,8 +14,8 @@ class Config:
     R2_ACCESS_KEY = os.environ.get('R2_ACCESS_KEY')
     R2_SECRET_KEY = os.environ.get('R2_SECRET_KEY')
 
-    # SendGrid
-    SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY')
+    # Brevo
+    BREVO_API_KEY = os.environ.get('BREVO_API_KEY')
     MAIL_USERNAME    = os.environ.get('MAIL_USERNAME', 'barroscontabil@gmail.com')  # remetente
 
     # Flask-WTF
